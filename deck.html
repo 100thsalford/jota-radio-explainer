@@ -958,7 +958,7 @@ const CONFIG = { callsign: "GB0XXX" };
   const dur = i => (+slides[i].dataset.dur || 12) * 1000;
 
   /* narration state for the current slide */
-  const nar = { token: 0, mode: "timed", lines: [], idx: 0, t: 0, plan: [], audio: null, cuts: [], doneAt: null };
+  const nar = { token: 0, mode: "timed", lines: [], idx: 0, t: 0, plan: [], cuts: [], doneAt: null };
   const setCap = t => { capText.textContent = t; capText.classList.remove("fresh"); void capText.offsetWidth; capText.classList.add("fresh"); };
   const finish = tok => { if (tok === nar.token && nar.doneAt === null) nar.doneAt = elapsed; };
 
@@ -974,9 +974,40 @@ const CONFIG = { callsign: "GB0XXX" };
   };
   if ("speechSynthesis" in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
 
+  /* ONE shared audio element: unlocked by the first tap, then reused for every slide
+     (phones only allow sound from elements a tap has already started) */
+  const A = new Audio(); A.preload = "auto"; A.setAttribute("playsinline", "");
+  const SILENT = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
+  let clip = null;   // { tok, k, i } for the clip currently being loaded or played
+  function unlockAudio() {
+    try { A.src = SILENT; const p = A.play(); if (p) p.catch(() => {}); } catch (e) {}
+    try { const u = new SpeechSynthesisUtterance(" "); u.volume = 0; speechSynthesis.speak(u); } catch (e) {}
+  }
+  A.addEventListener("error", () => {
+    if (!clip || A.src.startsWith("data:")) return;
+    const c = clip; tryClip(c.i, c.k + 1, c.tok);
+  });
+  A.addEventListener("loadedmetadata", () => {
+    if (!clip || clip.tok !== nar.token || A.src.startsWith("data:")) return;
+    nar.mode = "clip";
+    const total = nar.lines.reduce((n, l) => n + l.length, 0); let acc = 0;
+    nar.cuts = nar.lines.map(l => (acc += l.length) / total);
+    if (!paused) playClip();
+  });
+  A.addEventListener("timeupdate", () => {
+    if (!clip || clip.tok !== nar.token || nar.mode !== "clip" || !A.duration) return;
+    const f = A.currentTime / A.duration;
+    let j = nar.cuts.findIndex(c => f < c); if (j < 0) j = nar.lines.length - 1;
+    if (j !== nar.idx) { nar.idx = j; setCap(nar.lines[j]); }
+  });
+  A.addEventListener("ended", () => { if (clip && nar.mode === "clip") finish(clip.tok); });
+  function playClip() {
+    const p = A.play();
+    if (p) p.catch(() => { nar.mode = "timed"; soundOn = false; document.body.classList.remove("sound"); });
+  }
   function stopNarration() {
-    nar.token++;
-    if (nar.audio) { nar.audio.pause(); nar.audio.removeAttribute("src"); nar.audio = null; }
+    nar.token++; clip = null;
+    try { A.pause(); } catch (e) {}
     try { speechSynthesis.cancel(); } catch (e) {}
   }
   function startNarration(i) {
@@ -991,25 +1022,10 @@ const CONFIG = { callsign: "GB0XXX" };
   const EXTS = ["mp3", "m4a", "wav"];
   function tryClip(i, k, tok) {
     if (tok !== nar.token) return;
-    if (k >= EXTS.length) return speak(tok);
-    const a = new Audio();
-    a.preload = "auto";
-    a.addEventListener("error", () => tryClip(i, k + 1, tok), { once: true });
-    a.addEventListener("loadedmetadata", () => {
-      if (tok !== nar.token) return;
-      nar.audio = a; nar.mode = "clip";
-      const total = nar.lines.reduce((n, l) => n + l.length, 0); let acc = 0;
-      nar.cuts = nar.lines.map(l => (acc += l.length) / total);
-      if (!paused) a.play().catch(() => { nar.mode = "timed"; });
-    }, { once: true });
-    a.addEventListener("timeupdate", () => {
-      if (tok !== nar.token || !a.duration) return;
-      const f = a.currentTime / a.duration;
-      let j = nar.cuts.findIndex(c => f < c); if (j < 0) j = nar.lines.length - 1;
-      if (j !== nar.idx) { nar.idx = j; setCap(nar.lines[j]); }
-    });
-    a.addEventListener("ended", () => finish(tok));
-    a.src = `audio/${String(i + 1).padStart(2, "0")}-${SLUGS[i]}.${EXTS[k]}`;
+    if (k >= EXTS.length) { clip = null; return speak(tok); }
+    clip = { tok, k, i };
+    A.src = `audio/${String(i + 1).padStart(2, "0")}-${SLUGS[i]}.${EXTS[k]}`;
+    A.load();
   }
   function speak(tok) {
     if (!("speechSynthesis" in window)) { nar.mode = "timed"; return; }
@@ -1044,7 +1060,7 @@ const CONFIG = { callsign: "GB0XXX" };
   function setPaused(p) {
     paused = p; document.body.classList.toggle("paused", p);
     document.getElementById("b-play").textContent = p ? "▶ Play" : "❚❚ Pause";
-    if (nar.audio) { p ? nar.audio.pause() : nar.audio.play().catch(() => {}); }
+    if (nar.mode === "clip") { p ? A.pause() : A.play().catch(() => {}); }
     if (nar.mode === "speech") { try { p ? speechSynthesis.pause() : speechSynthesis.resume(); } catch (e) {} }
   }
   function setSound(on) {
@@ -1055,7 +1071,7 @@ const CONFIG = { callsign: "GB0XXX" };
   /* how long this slide should stay up: its minimum, or the narration plus a short pause */
   function target() {
     let est = 0;
-    if (nar.mode === "clip" && nar.audio && nar.audio.duration) est = nar.audio.duration * 1000;
+    if (nar.mode === "clip" && A.duration) est = A.duration * 1000;
     else est = nar.plan.reduce((a, b) => a + b, 0) * (nar.mode === "timed" ? 1 : 1.15);
     return Math.max(dur(cur), est + 1200);
   }
@@ -1086,7 +1102,7 @@ const CONFIG = { callsign: "GB0XXX" };
     clearInterval(autoT); startCard.hidden = true;
     setSound(withSound); show(0);
   };
-  document.getElementById("go-sound").onclick = () => begin(true);
+  document.getElementById("go-sound").onclick = () => { unlockAudio(); begin(true); };
   document.getElementById("go-quiet").onclick = e => { e.stopPropagation(); begin(false); };
 
   const m = location.hash.match(/^#s(\d+)$/);
@@ -1101,7 +1117,7 @@ const CONFIG = { callsign: "GB0XXX" };
 
   const next = () => show(cur + 1), prev = () => show(cur - 1);
   const togglePlay = () => setPaused(!paused);
-  const toggleSound = () => { if (!started) return begin(true); setSound(!soundOn); };
+  const toggleSound = () => { unlockAudio(); if (!started) return begin(true); setSound(!soundOn); };
   const full = () => {
     try {
       if (document.fullscreenElement) document.exitFullscreen();
@@ -1116,7 +1132,7 @@ const CONFIG = { callsign: "GB0XXX" };
   document.getElementById("spk").onclick = toggleSound;
   /* running quietly? a tap anywhere on the slides turns the voice on */
   document.getElementById("viewport").addEventListener("click", e => {
-    if (started && !soundOn && !e.target.closest(".spk")) setSound(true);
+    if (started && !soundOn && !e.target.closest(".spk")) { unlockAudio(); setSound(true); }
   });
   addEventListener("keydown", e => {
     if (e.key === "ArrowRight" || e.key === "PageDown") next();
