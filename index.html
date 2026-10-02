@@ -1,0 +1,952 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>JOTA Radio Explainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito+Sans:wght@400;600;700;800&family=IBM+Plex+Mono:wght@500;700&family=Caveat:wght@600&display=swap">
+<style>
+/* Layout: a fixed 1920x1080 "radio shack at night" stage, scaled to any screen; one slide at a time, auto-advancing. */
+:root{
+  --night:#160a31;      /* stage background: Scout purple at night */
+  --night-2:#211046;    /* panels */
+  --night-3:#2e1a5e;    /* raised shapes, ground */
+  --line:#4b3685;       /* rules, grid lines */
+  --paper:#f8f4ff;      /* main text */
+  --muted:#c3b5ea;      /* secondary text */
+  --teal:#1fd6b8;       /* signal / "go" */
+  --yellow:#ffe24a;     /* highlight / our station */
+  --red:#ff5d7a;        /* sending / blocked */
+  --green:#55e38f;      /* listening / ok */
+  --f-display:"Baloo 2","Nunito Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-body:"Nunito Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+  --f-hand:"Caveat","Segoe Print","Bradley Hand",cursive;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{margin:0;background:var(--night);color:var(--paper);font-family:var(--f-body);overflow:hidden}
+body.idle{cursor:none}
+.viewport{position:fixed;inset:0;overflow:hidden;background:
+  radial-gradient(1200px 700px at 85% -10%, rgba(138,60,240,.28), transparent 60%),
+  radial-gradient(900px 600px at -10% 110%, rgba(31,214,184,.12), transparent 60%), var(--night)}
+.stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform:translate(-50%,-50%) scale(var(--s,.5));transform-origin:center}
+
+/* ---------- slides ---------- */
+.slide{position:absolute;inset:0;padding:78px 120px 150px;display:flex;flex-direction:column;gap:34px;opacity:0;visibility:hidden;transition:opacity .6s ease,visibility 0s linear .6s}
+.slide.active{opacity:1;visibility:visible;transition:opacity .6s ease}
+.kicker{font:800 26px/1 var(--f-body);letter-spacing:.16em;text-transform:uppercase;color:var(--teal);display:flex;align-items:center;gap:14px}
+.kicker::before{content:"";width:14px;height:14px;border-radius:50%;background:var(--teal);box-shadow:0 0 0 6px rgba(31,214,184,.18)}
+h1,h2,h3{font-family:var(--f-display);font-weight:800;margin:0;line-height:1;letter-spacing:-.005em;text-wrap:balance}
+h1{font-size:132px}
+h2{font-size:92px}
+h3{font-size:46px;line-height:1.05}
+p{margin:0}
+.lead{font-size:40px;line-height:1.3;font-weight:600;color:var(--muted);max-width:34ch;text-wrap:pretty}
+.hl{color:var(--yellow)}
+.tl{color:var(--teal)}
+.mono{font-family:var(--f-mono)}
+.row{display:flex;gap:40px}
+.grow{flex:1;min-width:0}
+svg{display:block;overflow:visible}
+.panel{background:var(--night-2);border:3px solid var(--line);border-radius:28px}
+.tag{white-space:nowrap;display:inline-flex;align-items:center;gap:12px;padding:10px 24px;border-radius:999px;font:800 30px/1.1 var(--f-body);background:var(--night-3);color:var(--paper)}
+.tag.y{background:var(--yellow);color:var(--night)}
+.tag.t{background:var(--teal);color:var(--night)}
+.small{font-size:28px;line-height:1.35;color:var(--muted)}
+
+/* shared animation helpers (restart each time a slide becomes active) */
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+@keyframes flowDash{to{stroke-dashoffset:-48}}
+@keyframes ripple{0%{transform:scale(.2);opacity:.95}100%{transform:scale(1);opacity:0}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
+.active .in{animation:fadeUp .7s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--d,0) * 1s)}
+.active .flow{stroke-dasharray:14 10;animation:flowDash 1s linear infinite}
+.ring{transform-box:fill-box;transform-origin:center;opacity:0}
+.active .ring{animation:ripple 3s ease-out infinite;animation-delay:calc(var(--d,0) * 1s)}
+
+/* ---------- 1 title ---------- */
+.s-title{flex-direction:row;align-items:center;gap:40px}
+.s-title .copy{flex:1;display:flex;flex-direction:column;gap:38px;min-width:0}
+.s-title .chips{display:flex;flex-wrap:wrap;gap:16px}
+.s-title svg{width:760px;height:760px;flex:none}
+.dot{transform-box:fill-box;transform-origin:center}
+.active .dot{animation:pulse 2.4s ease-in-out infinite;animation-delay:calc(var(--d,0) * 1s)}
+
+/* ---------- 2 big idea ---------- */
+.compare{display:grid;grid-template-rows:1fr 1fr;gap:28px;flex:1;min-height:0}
+.compare .panel{display:grid;grid-template-columns:430px 1fr;align-items:center;gap:30px;padding:26px 40px}
+.compare .panel h3{margin-bottom:10px}
+.compare .bad{opacity:.62}
+.compare .good{border-color:var(--teal);background:linear-gradient(90deg,rgba(31,214,184,.12),transparent 70%),var(--night-2)}
+.compare svg{width:100%;height:auto}
+
+/* ---------- 3 broadcast vs ham ---------- */
+.versus{display:grid;grid-template-columns:1fr 1fr;gap:36px;flex:1;min-height:0}
+.versus .panel{padding:34px 40px;display:flex;flex-direction:column;gap:20px}
+.versus svg{width:100%;height:auto;flex:1}
+.versus .ham{border-color:var(--yellow)}
+@keyframes sendA{0%{transform:translateX(0);opacity:0}6%{opacity:1}42%{transform:translateX(270px);opacity:1}48%,100%{transform:translateX(270px);opacity:0}}
+@keyframes sendB{0%,50%{transform:translateX(0);opacity:0}56%{opacity:1}92%{transform:translateX(-270px);opacity:1}98%,100%{transform:translateX(-270px);opacity:0}}
+.active .packA{animation:sendA 5s ease-in-out infinite}
+.active .packB{animation:sendB 5s ease-in-out infinite}
+@keyframes litA{0%,48%{opacity:1}50%,100%{opacity:.2}}
+@keyframes litB{0%,48%{opacity:.2}50%,100%{opacity:1}}
+.active .litA{animation:litA 5s step-end infinite}
+.active .litB{animation:litB 5s step-end infinite}
+
+/* ---------- 4 PTT ---------- */
+.s-ptt .body{display:grid;grid-template-columns:600px 1fr;gap:70px;flex:1;min-height:0;align-items:center}
+.s-ptt svg{width:560px;height:auto;margin-top:-40px}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:30px}
+.steps li{display:grid;grid-template-columns:96px 1fr;gap:28px;align-items:start}
+.steps .n{width:96px;height:96px;border-radius:50%;display:grid;place-items:center;font:800 56px/1 var(--f-display);background:var(--yellow);color:var(--night)}
+.steps h3{font-size:56px;margin-bottom:6px}
+.steps p{font-size:32px;line-height:1.35;color:var(--muted)}
+@keyframes txLamp{0%,14%{opacity:0}16%,80%{opacity:1}82%,100%{opacity:0}}
+@keyframes rxLamp{0%,14%{opacity:1}16%,80%{opacity:0}82%,100%{opacity:1}}
+@keyframes press{0%,14%{transform:translateX(0)}16%,80%{transform:translateX(14px)}82%,100%{transform:translateX(0)}}
+@keyframes speak{0%,20%{opacity:0}26%,76%{opacity:1}80%,100%{opacity:0}}
+.active .txOn{animation:txLamp 6s linear infinite}
+.active .rxOn{animation:rxLamp 6s linear infinite}
+.active .pttBtn{animation:press 6s linear infinite}
+.active .speech{animation:speak 6s linear infinite}
+.txOn{opacity:0}
+.speech path{transform-box:fill-box;transform-origin:left center}
+
+/* ---------- 5 journey ---------- */
+.journey{display:grid;grid-template-columns:repeat(5,1fr);gap:26px;position:relative}
+.journey .card{padding:26px 24px 30px;display:flex;flex-direction:column;gap:14px;position:relative}
+.journey .card svg{width:100%;height:170px}
+.journey .card h3{font-size:40px}
+.journey .card p{font-size:27px;line-height:1.32;color:var(--muted)}
+.journey .num{font:700 24px/1 var(--f-mono);color:var(--teal)}
+.journey .card:not(:last-child)::after{content:"";position:absolute;right:-24px;top:110px;border:12px solid transparent;border-left:16px solid var(--teal);z-index:2}
+@keyframes lightCard{0%,4%{border-color:var(--line);box-shadow:none}6%,22%{border-color:var(--yellow);box-shadow:0 0 0 6px rgba(255,226,74,.15)}26%,100%{border-color:var(--line);box-shadow:none}}
+.active .journey .card{animation:lightCard 7.5s linear infinite;animation-delay:calc(var(--d,0) * 1.5s)}
+.factband{display:flex;align-items:center;gap:28px;padding:24px 36px;border-radius:24px;background:var(--yellow);color:var(--night);font:800 38px/1.2 var(--f-display)}
+.factband svg{width:70px;height:70px;flex:none}
+
+/* ---------- 6 riding the wave ---------- */
+.ride{display:grid;grid-template-columns:1fr 520px;gap:50px;flex:1;min-height:0}
+.waves{display:flex;flex-direction:column;gap:6px;justify-content:center}
+.waverow{display:grid;grid-template-columns:300px 1fr;align-items:center;gap:30px}
+.waverow .lbl h3{font-size:40px}
+.waverow .lbl p{font-size:25px;color:var(--muted);line-height:1.3;margin-top:6px}
+.waverow svg{width:100%;height:150px}
+.op{font:800 60px/1 var(--f-display);color:var(--teal);padding-left:300px;margin-left:30px;height:56px;display:flex;align-items:center}
+@keyframes scroll{to{transform:translateX(-800px)}}
+.active .scroll{animation:scroll 6s linear infinite}
+.ride .panel{padding:38px 40px;display:flex;flex-direction:column;gap:22px;align-self:center}
+.ride .panel p{font-size:31px;line-height:1.38}
+.ride .panel .small{font-size:24px}
+
+/* ---------- 7 wave sizes ---------- */
+.sizes{display:flex;flex-direction:column;gap:22px;flex:1;min-height:0;justify-content:center}
+.size{display:grid;grid-template-columns:270px 1fr 520px;gap:40px;align-items:center;padding:20px 36px}
+.size .band{display:flex;flex-direction:column;gap:6px}
+.size .band b{font:800 72px/1 var(--f-display)}
+.size .band span{font:700 25px/1.2 var(--f-mono);color:var(--muted)}
+.size svg{width:100%;height:120px}
+.size .cmp{font-size:30px;line-height:1.3}
+.size .cmp strong{display:block;font:800 40px/1.1 var(--f-display);color:var(--yellow)}
+.draw{stroke-dasharray:3000;stroke-dashoffset:0}
+@keyframes drawIn{from{stroke-dashoffset:3000}to{stroke-dashoffset:0}}
+.active .draw{animation:drawIn 2.6s ease-out both;animation-delay:calc(var(--d,0) * 1s)}
+
+/* ---------- 8/9 propagation ---------- */
+.prop{flex:1;min-height:0;display:flex;flex-direction:column;gap:24px}
+.prop svg{width:100%;height:470px;overflow:hidden}
+.chips{display:flex;flex-wrap:wrap;gap:18px}
+.chip{display:flex;align-items:center;gap:16px;padding:16px 26px;border-radius:20px;background:var(--night-2);border:3px solid var(--line);font:700 30px/1.25 var(--f-body)}
+.chip svg{width:40px;height:40px;flex:none}
+.head-row{display:flex;justify-content:space-between;align-items:flex-end;gap:40px}
+
+/* ---------- 10 alphabet ---------- */
+.abc{display:grid;grid-template-columns:repeat(9,1fr);gap:16px}
+.abc div{background:var(--night-2);border:3px solid var(--line);border-radius:20px;padding:14px 10px 16px;text-align:center}
+.abc b{display:block;font:800 66px/1 var(--f-display);color:var(--yellow)}
+.abc span{display:block;font:800 25px/1.2 var(--f-body);letter-spacing:.04em;text-transform:uppercase;margin-top:4px}
+.abc .key{background:var(--teal);border-color:var(--teal);color:var(--night)}
+.abc .key b{color:var(--night);font-size:40px;line-height:1.1;padding-top:8px}
+.abc .key span{font-size:22px}
+@keyframes spell{0%,3%{background:var(--night-2);border-color:var(--line);transform:none}5%,17%{background:var(--yellow);border-color:var(--yellow);transform:scale(1.08)}19%,100%{background:var(--night-2);border-color:var(--line);transform:none}}
+@keyframes spellTxt{0%,3%{color:var(--yellow)}5%,17%{color:var(--night)}19%,100%{color:var(--yellow)}}
+@keyframes spellTxt2{0%,3%{color:var(--paper)}5%,17%{color:var(--night)}19%,100%{color:var(--paper)}}
+.active .abc .sp{animation:spell 7s linear infinite;animation-delay:calc(var(--d) * 1.2s + 1s)}
+.active .abc .sp b{animation:spellTxt 7s linear infinite;animation-delay:calc(var(--d) * 1.2s + 1s)}
+.active .abc .sp span{animation:spellTxt2 7s linear infinite;animation-delay:calc(var(--d) * 1.2s + 1s)}
+
+/* ---------- 11 radio words ---------- */
+.words{display:grid;grid-template-columns:repeat(4,1fr);gap:24px;flex:1;min-height:0}
+.word{padding:28px 30px;display:flex;flex-direction:column;gap:12px}
+.word b{font:800 60px/1 var(--f-display);color:var(--yellow)}
+.word b.mono{font:700 52px/1.15 var(--f-mono)}
+.word p{font-size:30px;line-height:1.3;font-weight:700}
+.word em{font-style:normal;font-size:24px;line-height:1.3;color:var(--muted);margin-top:auto}
+
+/* ---------- 12 signal report ---------- */
+.report{display:grid;grid-template-columns:760px 1fr;gap:60px;flex:1;min-height:0;align-items:center}
+.rscale{display:flex;flex-direction:column;gap:12px}
+.rbar{display:grid;grid-template-columns:90px 1fr;align-items:center;gap:20px}
+.rbar b{font:700 40px/1 var(--f-mono);color:var(--muted)}
+.rbar span{display:block;padding:14px 22px;border-radius:14px;background:var(--night-2);border:3px solid var(--line);font:700 28px/1.2 var(--f-body)}
+.rbar.top b{color:var(--yellow)}
+.rbar.top span{background:var(--yellow);border-color:var(--yellow);color:var(--night)}
+.gauge svg{width:100%;height:auto}
+@keyframes needle{0%{transform:rotate(-80deg)}55%{transform:rotate(74deg)}62%{transform:rotate(64deg)}70%{transform:rotate(71deg)}80%,100%{transform:rotate(68deg)}}
+.needle{transform-origin:400px 400px;transform:rotate(68deg)}
+.active .needle{animation:needle 4s cubic-bezier(.3,.7,.3,1) both .6s}
+
+/* ---------- 13 J-code ---------- */
+.jgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.jc{display:grid;grid-template-columns:150px 1fr;gap:20px;align-items:center;padding:20px 26px}
+.jc b{font:700 46px/1 var(--f-mono);color:var(--yellow)}
+.jc p{font-size:30px;line-height:1.25;font-weight:700}
+.jc small{display:block;font-size:22px;color:var(--muted);font-weight:600;margin-top:4px}
+.xband{display:flex;align-items:center;gap:34px;padding:22px 36px;border-radius:24px;background:var(--teal);color:var(--night)}
+.xband b{font:800 40px/1.1 var(--f-display)}
+.xband span{font:700 30px/1.2 var(--f-body)}
+.xband .mono{font-weight:700;font-size:32px}
+
+/* ---------- chats & scripts ---------- */
+.chat{display:flex;flex-direction:column;gap:20px;flex:1;min-height:0}
+.msg{max-width:1560px;display:grid;grid-template-columns:auto 1fr;gap:24px;align-items:start}
+.msg .who{width:270px;padding-top:14px;text-align:right;font:800 24px/1.2 var(--f-body);letter-spacing:.08em;text-transform:uppercase;color:var(--teal)}
+.msg .who small{display:block;font:700 22px/1.2 var(--f-mono);letter-spacing:0;text-transform:none;color:var(--muted);margin-top:6px}
+.bubble{padding:22px 32px;border-radius:8px 30px 30px 30px;background:var(--night-2);border:3px solid var(--teal);font:700 38px/1.35 var(--f-body)}
+.bubble .tr{display:block;font-size:25px;font-weight:600;color:var(--muted);margin-top:6px;line-height:1.3}
+.msg.them{align-self:flex-end;grid-template-columns:1fr auto}
+.msg.them .who{order:2;text-align:left;color:var(--yellow)}
+.msg.them .step{margin-left:0}
+.msg.them .bubble{border-color:var(--yellow);border-radius:30px 8px 30px 30px}
+.code{font-family:var(--f-mono);font-weight:700;color:var(--yellow)}
+.msg.them .code{color:var(--teal)}
+.fill{display:inline-block;padding:0 14px;margin:2px 0;border-radius:10px;border:3px dashed var(--yellow);color:var(--yellow);font-weight:800;line-height:1.25}
+.msg.them .fill{border-color:var(--teal);color:var(--teal)}
+.cs{font-family:var(--f-mono);font-weight:700;color:var(--yellow)}
+.step{white-space:nowrap;display:table;margin-left:auto;font:800 22px/1 var(--f-body);letter-spacing:.12em;text-transform:uppercase;padding:8px 14px;border-radius:8px;background:var(--night-3);color:var(--paper);margin-bottom:10px}
+.after{display:flex;gap:20px;align-items:center;margin-top:auto;font:700 30px/1.3 var(--f-body);color:var(--muted)}
+
+/* ---------- 17 safety ---------- */
+.safe{display:grid;grid-template-columns:1fr 1fr;gap:36px;flex:1;min-height:0}
+.safe .panel{padding:34px 42px;display:flex;flex-direction:column;gap:22px}
+.safe ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:18px}
+.safe li{display:flex;gap:20px;align-items:center;font:700 36px/1.25 var(--f-body)}
+.safe li svg{width:46px;height:46px;flex:none}
+.safe .yes{border-color:var(--green)}
+.safe .no{border-color:var(--red)}
+.licence{display:flex;align-items:center;gap:28px;padding:24px 36px;border-radius:24px;background:var(--yellow);color:var(--night);font:800 36px/1.25 var(--f-display)}
+.licence svg{width:72px;height:72px;flex:none}
+
+/* ---------- 18 your turn ---------- */
+.s-end{flex-direction:row;align-items:center;gap:80px}
+.s-end .copy{flex:1;display:flex;flex-direction:column;gap:36px;min-width:0}
+.qsl{width:760px;flex:none;background:var(--paper);color:var(--night);border-radius:22px;padding:36px 42px;rotate:-3deg;box-shadow:0 30px 60px rgba(0,0,0,.4)}
+.qsl .top{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:4px solid var(--night);padding-bottom:16px}
+.qsl .big{font:800 96px/0.9 var(--f-display)}
+.qsl .cs2{font:700 44px/1 var(--f-mono)}
+.qsl .meta{font:800 20px/1.2 var(--f-body);letter-spacing:.14em;text-transform:uppercase;color:#5b4a8a}
+.qsl table{width:100%;border-collapse:collapse;margin-top:18px;font-variant-numeric:tabular-nums}
+.qsl th{font:800 18px/1.2 var(--f-body);letter-spacing:.12em;text-transform:uppercase;color:#5b4a8a;text-align:left;padding:6px 8px;border:2px solid #cfc4ef}
+.qsl td{font:700 30px/1.2 var(--f-mono);padding:10px 8px;border:2px solid #cfc4ef}
+.qsl .note{font:600 46px/1.1 var(--f-hand);color:#6a2bd1;margin-top:16px}
+
+/* ---------- chrome ---------- */
+.chrome{position:absolute;left:120px;right:120px;bottom:52px;display:flex;align-items:center;gap:36px}
+.onair{display:flex;align-items:center;gap:14px;font:800 22px/1 var(--f-body);letter-spacing:.16em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.onair i{width:18px;height:18px;border-radius:50%;background:var(--red);box-shadow:0 0 14px var(--red);animation:blink 1.6s ease-in-out infinite}
+.onair .cs{font-size:24px;letter-spacing:.04em}
+.bar{flex:1;display:flex;gap:8px}
+.seg{flex:1;height:8px;border-radius:4px;background:var(--night-3);overflow:hidden}
+.seg i{display:block;height:100%;width:0;background:var(--teal)}
+.seg.done i{width:100%;background:var(--line)}
+.count{font:700 22px/1 var(--f-mono);color:var(--muted);font-variant-numeric:tabular-nums}
+.paused .count::after{content:"  ❚❚";color:var(--yellow)}
+
+.controls{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;gap:10px;padding:10px;border-radius:999px;background:rgba(22,10,49,.9);border:2px solid var(--line);opacity:0;transition:opacity .3s;z-index:10}
+body:not(.idle) .controls{opacity:1}
+.controls button{appearance:none;border:0;border-radius:999px;background:var(--night-3);color:var(--paper);font:700 15px/1 var(--f-body);padding:12px 18px;cursor:pointer}
+.controls button:hover{background:var(--line)}
+.controls button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{animation:none!important;transition:none!important}
+  .ring{opacity:.5;transform:scale(.6)}
+  .txOn{opacity:0}.speech{opacity:1}
+}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="i-radio" viewBox="0 0 100 140">
+      <rect x="58" y="2" width="10" height="44" rx="5" fill="currentColor"/>
+      <rect x="18" y="36" width="64" height="100" rx="14" fill="currentColor"/>
+      <rect x="28" y="48" width="44" height="24" rx="4" fill="#160a31"/>
+      <g fill="#160a31"><circle cx="38" cy="92" r="4"/><circle cx="50" cy="92" r="4"/><circle cx="62" cy="92" r="4"/><circle cx="38" cy="106" r="4"/><circle cx="50" cy="106" r="4"/><circle cx="62" cy="106" r="4"/><circle cx="38" cy="120" r="4"/><circle cx="50" cy="120" r="4"/><circle cx="62" cy="120" r="4"/></g>
+      <rect x="10" y="66" width="8" height="30" rx="3" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-phone" viewBox="0 0 100 140">
+      <rect x="24" y="6" width="52" height="128" rx="12" fill="currentColor"/>
+      <rect x="31" y="20" width="38" height="96" rx="4" fill="#160a31"/>
+      <circle cx="50" cy="125" r="4" fill="#160a31"/>
+    </symbol>
+    <symbol id="i-mast" viewBox="0 0 100 140">
+      <g fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
+        <path d="M50 18 L26 136 M50 18 L74 136 M40 60 L60 60 M37 78 L63 78 M33 98 L67 98 M29 118 L71 118 M40 60 L63 78 M60 60 L37 78 M37 78 L67 98 M63 78 L33 98 M33 98 L71 118 M67 98 L29 118"/>
+      </g>
+      <circle cx="50" cy="14" r="8" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-cloud" viewBox="0 0 160 110">
+      <path d="M38 98 a28 28 0 0 1 -4 -56 a38 38 0 0 1 72 -12 a30 30 0 0 1 30 34 a22 22 0 0 1 -8 34 z" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-boxradio" viewBox="0 0 120 100">
+      <path d="M28 34 Q60 0 92 34" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+      <rect x="6" y="30" width="108" height="64" rx="12" fill="currentColor"/>
+      <circle cx="40" cy="62" r="20" fill="#160a31"/><circle cx="40" cy="62" r="7" fill="currentColor"/>
+      <rect x="70" y="44" width="34" height="12" rx="3" fill="#160a31"/>
+      <circle cx="87" cy="76" r="8" fill="#160a31"/>
+    </symbol>
+    <symbol id="i-tick" viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="#55e38f"/><path d="M11 21 l6 6 l12 -13" fill="none" stroke="#160a31" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-cross" viewBox="0 0 40 40"><circle cx="20" cy="20" r="19" fill="#ff5d7a"/><path d="M13 13 L27 27 M27 13 L13 27" fill="none" stroke="#160a31" stroke-width="5" stroke-linecap="round"/></symbol>
+    <marker id="arrT" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#1fd6b8"/></marker>
+    <marker id="arrY" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#ffe24a"/></marker>
+    <radialGradient id="glow"><stop offset="0" stop-color="#1fd6b8" stop-opacity=".25"/><stop offset="1" stop-color="#1fd6b8" stop-opacity="0"/></radialGradient>
+  </defs>
+</svg>
+
+<div class="viewport" id="viewport">
+<div class="stage" id="stage">
+
+<!-- 1 · TITLE -->
+<section class="slide s-title" data-dur="12" aria-label="Jamboree on the Air">
+  <div class="copy">
+    <div class="kicker in">Jamboree on the Air · JOTA-JOTI</div>
+    <h1 class="in" style="--d:.15">Talk to Scouts around the world <span class="hl">by radio!</span></h1>
+    <p class="lead in" style="--d:.35">Over 2 million Scouts get on the air on the third weekend of October. Scouts have been doing it since 1957.</p>
+    <div class="chips in" style="--d:.55"><span class="tag y">No phone</span><span class="tag y">No Wi-Fi</span><span class="tag y">No internet</span></div>
+  </div>
+  <svg viewBox="0 0 700 700" role="img" aria-label="A radio mast on top of the Earth sending waves to Scout stations around the globe">
+    <circle cx="350" cy="380" r="330" fill="url(#glow)"/>
+    <circle cx="350" cy="380" r="260" fill="#2e1a5e" stroke="#1fd6b8" stroke-width="4"/>
+    <g fill="none" stroke="#4b3685" stroke-width="3">
+      <ellipse cx="350" cy="380" rx="260" ry="90"/><ellipse cx="350" cy="380" rx="260" ry="185"/>
+      <ellipse cx="350" cy="380" rx="90" ry="260"/><ellipse cx="350" cy="380" rx="185" ry="260"/>
+      <line x1="90" y1="380" x2="610" y2="380"/><line x1="350" y1="120" x2="350" y2="640"/>
+    </g>
+    <g fill="none" stroke="#1fd6b8" stroke-width="4" stroke-linecap="round" opacity=".85">
+      <path class="flow" d="M330 70 Q 170 120 200 300"/>
+      <path class="flow" d="M330 70 Q 520 110 500 290"/>
+      <path class="flow" d="M330 70 Q 610 260 540 470"/>
+      <path class="flow" d="M330 70 Q 110 300 230 520"/>
+      <path class="flow" d="M330 70 Q 470 380 400 590"/>
+    </g>
+    <g fill="#ffe24a">
+      <circle class="dot" cx="200" cy="300" r="13" style="--d:0"/>
+      <circle class="dot" cx="500" cy="290" r="13" style="--d:.5"/>
+      <circle class="dot" cx="540" cy="470" r="13" style="--d:1"/>
+      <circle class="dot" cx="230" cy="520" r="13" style="--d:1.5"/>
+      <circle class="dot" cx="400" cy="590" r="13" style="--d:2"/>
+    </g>
+    <g fill="none" stroke="#ffe24a" stroke-width="3">
+      <circle class="ring" cx="330" cy="60" r="200" vector-effect="non-scaling-stroke" style="--d:0"/>
+      <circle class="ring" cx="330" cy="60" r="200" vector-effect="non-scaling-stroke" style="--d:1"/>
+      <circle class="ring" cx="330" cy="60" r="200" vector-effect="non-scaling-stroke" style="--d:2"/>
+    </g>
+    <use href="#i-mast" x="290" y="40" width="80" height="112" color="#ffe24a"/>
+  </svg>
+</section>
+
+<!-- 2 · BIG IDEA -->
+<section class="slide" data-dur="14" aria-label="The big idea">
+  <div class="kicker">The big idea</div>
+  <h2>No phone. No Wi-Fi. No internet.<br><span class="hl">Just the air.</span></h2>
+  <div class="compare">
+    <div class="panel bad">
+      <div><h3>A phone or video call</h3><p class="small">Needs masts, cables, Wi-Fi and the internet in the middle. If the network is down, no call.</p></div>
+      <svg viewBox="0 0 1100 200" role="img" aria-label="Phone to mast to internet to mast to phone">
+        <g stroke="#c3b5ea" stroke-width="5" stroke-dasharray="4 10" stroke-linecap="round"><line x1="140" y1="110" x2="270" y2="110"/><line x1="380" y1="110" x2="460" y2="110"/><line x1="640" y1="110" x2="720" y2="110"/><line x1="830" y1="110" x2="960" y2="110"/></g>
+        <use href="#i-phone" x="40" y="30" width="110" height="154" color="#c3b5ea"/>
+        <use href="#i-mast" x="270" y="20" width="110" height="160" color="#c3b5ea"/>
+        <use href="#i-cloud" x="460" y="40" width="180" height="124" color="#c3b5ea"/>
+        <text x="550" y="128" text-anchor="middle" font-family="Nunito Sans, sans-serif" font-weight="800" font-size="26" fill="#160a31">internet</text>
+        <use href="#i-mast" x="720" y="20" width="110" height="160" color="#c3b5ea"/>
+        <use href="#i-phone" x="950" y="30" width="110" height="154" color="#c3b5ea"/>
+      </svg>
+    </div>
+    <div class="panel good">
+      <div><h3 class="tl">Ham radio</h3><p class="small" style="color:var(--paper)">Needs two radios and two antennas. Radio waves carry your voice straight from our antenna to theirs.</p></div>
+      <svg viewBox="0 0 1100 200" role="img" aria-label="Radio sending waves directly to another radio">
+        <use href="#i-radio" x="40" y="20" width="120" height="168" color="#ffe24a"/>
+        <g fill="none" stroke="#1fd6b8" stroke-width="6" stroke-linecap="round">
+          <path class="packA" d="M190 60 Q215 100 190 140 M225 45 Q260 100 225 155 M260 30 Q305 100 260 170"/>
+          <path class="packA" style="animation-delay:-1.2s" d="M190 60 Q215 100 190 140 M225 45 Q260 100 225 155 M260 30 Q305 100 260 170"/>
+        </g>
+        <g fill="none" stroke="#1fd6b8" stroke-width="5" stroke-linecap="round" opacity=".5"><path class="flow" d="M180 100 L 920 100"/></g>
+        <use href="#i-radio" x="940" y="20" width="120" height="168" color="#ffe24a"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- 3 · BROADCAST vs HAM -->
+<section class="slide" data-dur="14" aria-label="Broadcast radio versus ham radio">
+  <div class="kicker">Two kinds of radio</div>
+  <h2>Broadcast radio <span class="tl">vs</span> <span class="hl">ham radio</span></h2>
+  <div class="versus">
+    <div class="panel">
+      <h3>Broadcast radio <span class="small">(music & news stations)</span></h3>
+      <svg viewBox="0 0 760 400" role="img" aria-label="One big tower sends to many radios. The radios can only listen.">
+        <g fill="none" stroke="#c3b5ea" stroke-width="5" stroke-linecap="round" marker-end="url(#arrT)">
+          <path class="flow" d="M200 140 L 520 40"/>
+          <path class="flow" d="M200 160 L 560 140"/>
+          <path class="flow" d="M200 180 L 560 245"/>
+          <path class="flow" d="M200 200 L 520 345"/>
+        </g>
+        <use href="#i-mast" x="40" y="60" width="170" height="240" color="#c3b5ea"/>
+        <g fill="none" stroke="#c3b5ea" stroke-width="4"><circle class="ring" cx="125" cy="75" r="140" vector-effect="non-scaling-stroke"/><circle class="ring" cx="125" cy="75" r="140" vector-effect="non-scaling-stroke" style="--d:1.5"/></g>
+        <use href="#i-boxradio" x="560" y="0" width="110" height="92" color="#1fd6b8"/>
+        <use href="#i-boxradio" x="600" y="100" width="110" height="92" color="#1fd6b8"/>
+        <use href="#i-boxradio" x="600" y="200" width="110" height="92" color="#1fd6b8"/>
+        <use href="#i-boxradio" x="560" y="300" width="110" height="92" color="#1fd6b8"/>
+        <text x="125" y="345" text-anchor="middle" font-family="Nunito Sans, sans-serif" font-weight="800" font-size="28" fill="#f8f4ff">One station talks</text>
+      </svg>
+      <p style="font-size:34px;font-weight:700;line-height:1.3">One station sends. Everyone else <span class="hl">only listens</span>. Nobody can talk back.</p>
+    </div>
+    <div class="panel ham">
+      <h3 class="hl">Ham radio <span class="small">(radio amateurs & JOTA)</span></h3>
+      <svg viewBox="0 0 760 400" role="img" aria-label="Two radios taking turns to send and receive">
+        <use class="litA" href="#i-radio" x="40" y="80" width="170" height="238" color="#ffe24a"/>
+        <use class="litB" href="#i-radio" x="550" y="80" width="170" height="238" color="#ffe24a"/>
+        <g fill="none" stroke="#1fd6b8" stroke-width="7" stroke-linecap="round">
+          <path class="packA" d="M215 150 Q240 195 215 240 M250 130 Q285 195 250 260 M285 110 Q330 195 285 280"/>
+          <path class="packB" d="M545 150 Q520 195 545 240 M510 130 Q475 195 510 260 M475 110 Q430 195 475 280"/>
+        </g>
+        <text x="125" y="360" text-anchor="middle" font-family="Nunito Sans, sans-serif" font-weight="800" font-size="28" fill="#f8f4ff">Our station</text>
+        <text x="635" y="360" text-anchor="middle" font-family="Nunito Sans, sans-serif" font-weight="800" font-size="28" fill="#f8f4ff">Scouts far away</text>
+        <text x="380" y="40" text-anchor="middle" font-family="Nunito Sans, sans-serif" font-weight="800" font-size="26" fill="#1fd6b8" letter-spacing="3">TAKE TURNS</text>
+      </svg>
+      <p style="font-size:34px;font-weight:700;line-height:1.3">Both stations can <span class="hl">talk and listen</span>. We take turns, like a walkie-talkie.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4 · PRESS TALK RELEASE -->
+<section class="slide s-ptt" data-dur="14" aria-label="Using the push to talk button">
+  <div class="kicker">The magic button</div>
+  <h2>Press. Talk. <span class="hl">Let go.</span></h2>
+  <div class="body">
+    <svg viewBox="0 0 600 760" role="img" aria-label="Hand microphone with a push-to-talk button and a light showing TX when sending and RX when listening">
+      <path d="M300 640 C 300 690, 240 690, 250 720 S 330 740, 300 780" fill="none" stroke="#4b3685" stroke-width="16" stroke-linecap="round"/>
+      <g class="pttBtn"><rect x="128" y="290" width="56" height="170" rx="20" fill="#ffe24a"/></g>
+      <rect x="170" y="70" width="260" height="580" rx="120" fill="#2e1a5e" stroke="#f8f4ff" stroke-width="5"/>
+      <g fill="#4b3685">
+        <circle cx="250" cy="150" r="9"/><circle cx="300" cy="150" r="9"/><circle cx="350" cy="150" r="9"/>
+        <circle cx="225" cy="190" r="9"/><circle cx="275" cy="190" r="9"/><circle cx="325" cy="190" r="9"/><circle cx="375" cy="190" r="9"/>
+        <circle cx="250" cy="230" r="9"/><circle cx="300" cy="230" r="9"/><circle cx="350" cy="230" r="9"/>
+      </g>
+      <g class="rxOn"><circle cx="300" cy="400" r="62" fill="#55e38f"/><text x="300" y="418" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="48" fill="#160a31">RX</text></g>
+      <g class="txOn"><circle cx="300" cy="400" r="62" fill="#ff5d7a"/><text x="300" y="418" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="48" fill="#160a31">TX</text></g>
+      <g class="rxOn"><text x="300" y="530" text-anchor="middle" font-family="Nunito Sans, sans-serif" font-weight="800" font-size="34" fill="#55e38f">listening</text></g>
+      <g class="txOn"><text x="300" y="530" text-anchor="middle" font-family="Nunito Sans, sans-serif" font-weight="800" font-size="34" fill="#ff5d7a">sending</text></g>
+      <text x="40" y="270" font-family="Nunito Sans, sans-serif" font-weight="800" font-size="30" fill="#ffe24a">PTT</text>
+      <path d="M70 280 L 120 320" stroke="#ffe24a" stroke-width="4" marker-end="url(#arrY)"/>
+      <g class="speech" fill="none" stroke="#1fd6b8" stroke-width="7" stroke-linecap="round">
+        <path d="M470 120 Q 450 160 470 200"/><path d="M505 95 Q 475 160 505 225"/><path d="M540 70 Q 500 160 540 250"/>
+      </g>
+    </svg>
+    <ol class="steps">
+      <li class="in" style="--d:.2"><span class="n">1</span><div><h3>Press and hold</h3><p>Push the button <b>first</b>, then start talking. The light goes to TX.</p></div></li>
+      <li class="in" style="--d:.5"><span class="n">2</span><div><h3>Talk clearly</h3><p>Hold the mic about a hand-span (10 cm) from your mouth. Speak slowly.</p></div></li>
+      <li class="in" style="--d:.8"><span class="n">3</span><div><h3>Let go to listen</h3><p>Say <b>“over”</b>, then release. You can't hear them while you hold the button!</p></div></li>
+    </ol>
+  </div>
+</section>
+
+<!-- 5 · JOURNEY OF YOUR VOICE -->
+<section class="slide" data-dur="15" aria-label="The journey of your voice">
+  <div class="kicker">When you press the button</div>
+  <h2>The journey of <span class="hl">your voice</span></h2>
+  <div class="journey">
+    <div class="card panel" style="--d:0">
+      <span class="num">1</span>
+      <svg viewBox="0 0 240 170" aria-hidden="true">
+        <rect x="20" y="30" width="150" height="80" rx="20" fill="#f8f4ff"/><path d="M50 108 L40 140 L80 108z" fill="#f8f4ff"/>
+        <text x="95" y="82" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="36" fill="#160a31">Hello!</text>
+        <g fill="none" stroke="#1fd6b8" stroke-width="6" stroke-linecap="round"><path d="M185 50 Q200 70 185 90"/><path d="M205 38 Q225 70 205 102"/></g>
+      </svg>
+      <h3>You speak</h3><p>Your voice makes the air wobble. That's sound.</p>
+    </div>
+    <div class="card panel" style="--d:1">
+      <span class="num">2</span>
+      <svg viewBox="0 0 240 170" aria-hidden="true">
+        <rect x="80" y="14" width="80" height="120" rx="40" fill="#2e1a5e" stroke="#f8f4ff" stroke-width="5"/>
+        <path d="M120 134 L120 160" stroke="#f8f4ff" stroke-width="6"/>
+        <path d="M10 90 L40 90 L50 60 L60 120 L70 75 L80 90" fill="none" stroke="#ffe24a" stroke-width="5" stroke-linejoin="round"/>
+        <path d="M160 90 L175 90 L185 60 L195 120 L205 75 L215 90 L235 90" fill="none" stroke="#ffe24a" stroke-width="5" stroke-linejoin="round"/>
+      </svg>
+      <h3>Microphone</h3><p>Turns the wobbles into a tiny electric signal.</p>
+    </div>
+    <div class="card panel" style="--d:2">
+      <span class="num">3</span>
+      <svg viewBox="0 0 240 170" aria-hidden="true">
+        <use href="#i-radio" x="10" y="10" width="110" height="154" color="#ffe24a"/>
+        <path data-wave="am" data-w="110" data-h="70" data-c="10" transform="translate(120 50)" fill="none" stroke="#1fd6b8" stroke-width="4"/>
+      </svg>
+      <h3>Radio</h3><p>Puts your voice onto a super-fast radio wave.</p>
+    </div>
+    <div class="card panel" style="--d:3">
+      <span class="num">4</span>
+      <svg viewBox="0 0 240 170" aria-hidden="true">
+        <use href="#i-mast" x="40" y="20" width="100" height="145" color="#f8f4ff"/>
+        <g fill="none" stroke="#1fd6b8" stroke-width="6" stroke-linecap="round"><path d="M135 20 Q155 40 135 60"/><path d="M155 5 Q185 40 155 75"/><path d="M175 -10 Q215 40 175 90"/></g>
+      </svg>
+      <h3>Antenna</h3><p>Sends the wave flying through the air.</p>
+    </div>
+    <div class="card panel" style="--d:4">
+      <span class="num">5</span>
+      <svg viewBox="0 0 240 170" aria-hidden="true">
+        <use href="#i-radio" x="10" y="10" width="110" height="154" color="#ffe24a"/>
+        <rect x="130" y="40" width="104" height="60" rx="16" fill="#f8f4ff"/><path d="M150 98 L145 124 L172 98z" fill="#f8f4ff"/>
+        <text x="182" y="80" text-anchor="middle" font-family="Baloo 2, sans-serif" font-weight="800" font-size="28" fill="#160a31">Hello!</text>
+      </svg>
+      <h3>Their radio</h3><p>Catches the wave, takes your voice off and plays it.</p>
+    </div>
+  </div>
+  <div class="factband in" style="--d:.6">
+    <svg viewBox="0 0 70 70" aria-hidden="true"><circle cx="35" cy="35" r="32" fill="#160a31"/><path d="M38 10 L20 40 L34 40 L30 60 L50 28 L36 28z" fill="#ffe24a"/></svg>
+    Radio waves travel at the speed of light. They could go round the Earth about 7 times in one second!
+  </div>
+</section>
+
+<!-- 6 · VOICE RIDES THE WAVE -->
+<section class="slide" data-dur="14" aria-label="How your voice rides a radio wave">
+  <div class="kicker">Inside the radio</div>
+  <h2>Your voice <span class="hl">rides a radio wave</span></h2>
+  <div class="ride">
+    <div class="waves">
+      <div class="waverow">
+        <div class="lbl"><h3 class="hl">Your voice</h3><p>Slow, wobbly. Can't travel far on its own.</p></div>
+        <svg viewBox="0 0 800 150" preserveAspectRatio="none" aria-hidden="true"><defs><clipPath id="cw1"><rect width="800" height="150"/></clipPath></defs><g clip-path="url(#cw1)"><path class="scroll" data-wave="voice" data-w="1600" data-h="150" data-c="4" fill="none" stroke="#ffe24a" stroke-width="6" stroke-linecap="round"/></g></svg>
+      </div>
+      <div class="op">+</div>
+      <div class="waverow">
+        <div class="lbl"><h3 class="tl">Radio wave</h3><p>Super fast. Can travel a very long way.</p></div>
+        <svg viewBox="0 0 800 150" preserveAspectRatio="none" aria-hidden="true"><defs><clipPath id="cw2"><rect width="800" height="150"/></clipPath></defs><g clip-path="url(#cw2)"><path class="scroll" data-wave="carrier" data-w="1600" data-h="150" data-c="80" fill="none" stroke="#1fd6b8" stroke-width="4"/></g></svg>
+      </div>
+      <div class="op">=</div>
+      <div class="waverow">
+        <div class="lbl"><h3>Voice + wave</h3><p>The wave's shape now carries your voice.</p></div>
+        <svg viewBox="0 0 800 150" preserveAspectRatio="none" aria-hidden="true"><defs><clipPath id="cw3"><rect width="800" height="150"/></clipPath></defs><g clip-path="url(#cw3)"><g class="scroll"><path data-wave="am" data-w="1600" data-h="150" data-c="80" data-v="4" fill="none" stroke="#1fd6b8" stroke-width="4"/><path data-wave="env" data-w="1600" data-h="150" data-v="4" fill="none" stroke="#ffe24a" stroke-width="4" stroke-dasharray="10 8"/></g></g></svg>
+      </div>
+    </div>
+    <div class="panel">
+      <h3 class="hl">Like a delivery van</h3>
+      <p>The radio wave is a super-fast van. Your voice is the parcel inside.</p>
+      <p>At the other end, their radio unpacks the parcel and plays your voice out of the speaker.</p>
+      <p class="small">For grown-ups: changing the wave's height is AM, changing its frequency is FM. Hams use FM on VHF/UHF and SSB on HF.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 7 · WAVE SIZES -->
+<section class="slide" data-dur="14" aria-label="Radio waves come in different sizes">
+  <div class="kicker">Radio waves come in sizes</div>
+  <h2>Long waves, short waves</h2>
+  <div class="sizes">
+    <div class="size panel">
+      <div class="band"><b class="hl">HF</b><span>3 – 30 MHz</span></div>
+      <svg viewBox="0 0 900 120" preserveAspectRatio="none" aria-hidden="true"><path class="draw" style="--d:0" data-wave="sine" data-w="900" data-h="120" data-c="1.5" fill="none" stroke="#ffe24a" stroke-width="7" stroke-linecap="round"/></svg>
+      <div class="cmp"><strong>10 – 100 m long</strong>From a bus to a football pitch!</div>
+    </div>
+    <div class="size panel">
+      <div class="band"><b class="tl">VHF</b><span>30 – 300 MHz</span></div>
+      <svg viewBox="0 0 900 120" preserveAspectRatio="none" aria-hidden="true"><path class="draw" style="--d:.4" data-wave="sine" data-w="900" data-h="120" data-c="6" fill="none" stroke="#1fd6b8" stroke-width="6" stroke-linecap="round"/></svg>
+      <div class="cmp"><strong>1 – 10 m long</strong>The “2 metre” band: as tall as a door.</div>
+    </div>
+    <div class="size panel">
+      <div class="band"><b class="tl">UHF</b><span>300 – 3,000 MHz</span></div>
+      <svg viewBox="0 0 900 120" preserveAspectRatio="none" aria-hidden="true"><path class="draw" style="--d:.8" data-wave="sine" data-w="900" data-h="120" data-c="18" fill="none" stroke="#1fd6b8" stroke-width="5" stroke-linecap="round"/></svg>
+      <div class="cmp"><strong>10 cm – 1 m long</strong>The “70 cm” band: about a grown-up's arm.</div>
+    </div>
+  </div>
+  <p class="lead in" style="--d:1.2;max-width:none;font-size:34px">Longer waves travel further, like the boom of a bass drum you can hear right across a festival field.</p>
+</section>
+
+<!-- 8 · VHF / UHF -->
+<section class="slide" data-dur="14" aria-label="How VHF and UHF waves travel">
+  <div class="head-row">
+    <div style="display:flex;flex-direction:column;gap:20px"><div class="kicker">VHF & UHF</div><h2>Straight lines, <span class="tl">like a torch beam</span></h2></div>
+    <span class="tag t" style="font-size:34px;padding:14px 30px">Best for: across town</span>
+  </div>
+  <div class="prop">
+    <svg viewBox="0 0 1700 560" role="img" aria-label="VHF reaches a nearby station directly. A hill blocks a station behind it, but a repeater on the hilltop passes the signal on.">
+      <path d="M820 306 L 1700 284 L 1700 470 L 1040 440z" fill="#0d0522" opacity=".6"/>
+      <text x="1190" y="415" text-anchor="middle" font-family="Nunito Sans, sans-serif" font-weight="800" font-size="24" fill="#c3b5ea" letter-spacing="3">RADIO SHADOW</text>
+      <path d="M0 470 Q 850 400 1700 470 L1700 560 L0 560Z" fill="#2e1a5e"/>
+      <path d="M600 452 Q 820 170 1040 440 Z" fill="#3a2470" stroke="#4b3685" stroke-width="4"/>
+      <g fill="none" stroke-width="7" stroke-linecap="round">
+        <path class="flow" d="M180 330 L 450 395" stroke="#1fd6b8"/>
+        <path d="M180 330 L 700 360" stroke="#ff5d7a" stroke-dasharray="14 12"/>
+        <path class="flow" d="M180 322 L 812 222" stroke="#1fd6b8"/>
+        <path class="flow" d="M830 222 L 1440 390" stroke="#1fd6b8"/>
+      </g>
+      <use href="#i-cross" x="680" y="330" width="56" height="56"/>
+      <use href="#i-mast" x="120" y="300" width="120" height="170" color="#ffe24a"/>
+      <use href="#i-radio" x="420" y="365" width="60" height="84" color="#f8f4ff"/>
+      <use href="#i-mast" x="775" y="205" width="90" height="110" color="#f8f4ff"/>
+      <use href="#i-radio" x="1420" y="372" width="60" height="84" color="#f8f4ff"/>
+      <g fill="none" stroke="#1fd6b8" stroke-width="3"><circle class="ring" cx="820" cy="215" r="110" vector-effect="non-scaling-stroke"/><circle class="ring" cx="820" cy="215" r="110" vector-effect="non-scaling-stroke" style="--d:1.5"/></g>
+      <g font-family="Nunito Sans, sans-serif" font-weight="800" font-size="30" fill="#f8f4ff" text-anchor="middle">
+        <text x="180" y="520">Our station</text>
+        <text x="450" y="520">Across town</text>
+        <text x="820" y="175" fill="#1fd6b8">Repeater on a hill</text>
+        <text x="1450" y="520">Behind the hill</text>
+      </g>
+      <use href="#i-tick" x="480" y="345" width="44" height="44"/>
+      <use href="#i-tick" x="1488" y="350" width="44" height="44"/>
+    </svg>
+    <div class="chips">
+      <div class="chip in" style="--d:.6"><svg viewBox="0 0 40 40"><use href="#i-cross"/></svg>Hills, buildings and the Earth’s curve block it</div>
+      <div class="chip in" style="--d:.9"><svg viewBox="0 0 40 40"><use href="#i-tick"/></svg>A repeater passes it on</div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 · HF -->
+<section class="slide" data-dur="15" aria-label="How HF waves travel around the world">
+  <div class="head-row">
+    <div style="display:flex;flex-direction:column;gap:20px"><div class="kicker">HF</div><h2>Bounces off the sky, <span class="hl">round the world</span></h2></div>
+    <span class="tag y" style="font-size:34px;padding:14px 30px">Best for: other countries</span>
+  </div>
+  <div class="prop">
+    <svg viewBox="0 0 1700 600" role="img" aria-label="HF waves bounce between the ionosphere high in the sky and the ground to reach the other side of the world, while VHF passes straight through into space.">
+      <circle cx="850" cy="1650" r="1500" fill="none" stroke="#ffe24a" stroke-opacity=".16" stroke-width="70"/>
+      <circle cx="850" cy="1650" r="1500" fill="none" stroke="#ffe24a" stroke-opacity=".6" stroke-width="3" stroke-dasharray="6 10"/>
+      <text x="850" y="128" text-anchor="middle" font-family="Nunito Sans, sans-serif" font-weight="800" font-size="28" fill="#ffe24a" letter-spacing="3">IONOSPHERE · 100–400 KM UP</text>
+      <circle cx="850" cy="1650" r="1250" fill="#2e1a5e" stroke="#1fd6b8" stroke-width="4"/>
+      <path d="M262 545 L 150 20" stroke="#c3b5ea" stroke-width="5" stroke-dasharray="4 12" stroke-linecap="round" fill="none"/>
+      <text x="196" y="70" font-family="Nunito Sans, sans-serif" font-weight="700" font-size="24" fill="#c3b5ea">VHF/UHF goes straight</text>
+      <text x="196" y="100" font-family="Nunito Sans, sans-serif" font-weight="700" font-size="24" fill="#c3b5ea">through into space</text>
+      <path class="flow" d="M270 545 L 550 182 L 850 398 L 1150 182 L 1430 545" fill="none" stroke="#1fd6b8" stroke-width="8" stroke-linejoin="round" stroke-linecap="round"/>
+      <g fill="#ffe24a"><circle cx="550" cy="182" r="12"/><circle cx="1150" cy="182" r="12"/><circle cx="850" cy="398" r="12"/></g>
+      <g font-family="Baloo 2, sans-serif" font-weight="800" font-size="34" fill="#ffe24a" text-anchor="middle"><text x="550" y="165">bounce!</text><text x="1150" y="165">bounce!</text><text x="850" y="455">bounce!</text></g>
+      <use href="#i-mast" x="225" y="440" width="80" height="114" color="#ffe24a"/>
+      <use href="#i-mast" x="1395" y="440" width="80" height="114" color="#f8f4ff"/>
+      <g font-family="Nunito Sans, sans-serif" font-weight="800" font-size="30" fill="#f8f4ff" text-anchor="middle"><text x="265" y="595">Us</text><text x="1435" y="595">Scouts in another country</text></g>
+      <g transform="translate(1560 60)"><circle r="38" fill="#ffe24a"/><g stroke="#ffe24a" stroke-width="6" stroke-linecap="round"><line x1="0" y1="-52" x2="0" y2="-66"/><line x1="0" y1="52" x2="0" y2="66"/><line x1="-52" y1="0" x2="-66" y2="0"/><line x1="52" y1="0" x2="66" y2="0"/><line x1="37" y1="37" x2="47" y2="47"/><line x1="-37" y1="-37" x2="-47" y2="-47"/><line x1="37" y1="-37" x2="47" y2="-47"/><line x1="-37" y1="37" x2="-47" y2="47"/></g></g>
+    </svg>
+    <div class="chips">
+      <div class="chip in" style="--d:.3">The ionosphere bounces HF back down, like a mirror</div>
+      <div class="chip in" style="--d:.6">The Sun powers it, so it changes from day to night</div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 · PHONETIC ALPHABET -->
+<section class="slide" data-dur="16" aria-label="The radio alphabet">
+  <div class="kicker">The radio alphabet</div>
+  <h2>Spell it out: <span class="hl">Alpha, Bravo, Charlie…</span></h2>
+  <div class="abc" id="abc"></div>
+  <p class="lead in" style="--d:.5;max-width:none;font-size:34px;color:var(--paper)">On a crackly radio, B, D, P and V all sound alike. <span class="hl">Bravo, Delta, Papa and Victor don't!</span></p>
+</section>
+
+<!-- 11 · RADIO WORDS -->
+<section class="slide" data-dur="16" aria-label="Radio words">
+  <div class="kicker">Radio shorthand</div>
+  <h2>Talk like a radio operator</h2>
+  <div class="words">
+    <div class="word panel in" style="--d:.1"><b class="mono">CQ</b><p>Calling anyone!</p><em>Start a call: “CQ Jamboree…”</em></div>
+    <div class="word panel in" style="--d:.2"><b>Callsign</b><p>A station's name, like a car number plate.</p><em>Ours is <span class="cs" data-cs></span></em></div>
+    <div class="word panel in" style="--d:.3"><b>Over</b><p>I've finished. Your turn!</p><em>Say it, then let go of the button.</em></div>
+    <div class="word panel in" style="--d:.4"><b>Roger</b><p>Got it, I understood.</p><em>“Roger, thank you!”</em></div>
+    <div class="word panel in" style="--d:.5"><b>Say again</b><p>Please repeat that.</p><em>When it's too crackly to hear.</em></div>
+    <div class="word panel in" style="--d:.6"><b class="mono">QTH</b><p>Where I am.</p><em>“My QTH is …”</em></div>
+    <div class="word panel in" style="--d:.7"><b class="mono">QSL</b><p>I got your message. Also: a postcard to prove we talked.</p><em>“QSL card on the way!”</em></div>
+    <div class="word panel in" style="--d:.8"><b class="mono">73</b><p>Best wishes! A friendly goodbye.</p><em>“73 from …”</em></div>
+  </div>
+</section>
+
+<!-- 12 · SIGNAL REPORT -->
+<section class="slide" data-dur="14" aria-label="Signal reports: five and nine">
+  <div class="kicker">Signal report</div>
+  <h2>“You're <span class="hl">5 and 9</span>” means loud and clear</h2>
+  <div class="report">
+    <div>
+      <h3 style="margin-bottom:18px">R = how easy to <span class="tl">understand</span> (1–5)</h3>
+      <div class="rscale">
+        <div class="rbar top in" style="--d:.5"><b>R5</b><span>Perfect, every word</span></div>
+        <div class="rbar in" style="--d:.4"><b>R4</b><span>Easy to understand</span></div>
+        <div class="rbar in" style="--d:.3"><b>R3</b><span>Hard work</span></div>
+        <div class="rbar in" style="--d:.2"><b>R2</b><span>Only a few words</span></div>
+        <div class="rbar in" style="--d:.1"><b>R1</b><span>Can't understand</span></div>
+      </div>
+    </div>
+    <div class="gauge">
+      <h3 style="margin-bottom:18px">S = how <span class="tl">strong</span> the signal is (1–9)</h3>
+      <svg viewBox="0 0 800 470" role="img" aria-label="S-meter needle swinging up to S9">
+        <path d="M70 400 A330 330 0 0 1 730 400" fill="none" stroke="#2e1a5e" stroke-width="60"/>
+        <g id="ticks" font-family="IBM Plex Mono, monospace" font-weight="700" font-size="34" text-anchor="middle"></g>
+        <line class="needle" x1="400" y1="400" x2="400" y2="105" stroke="#ff5d7a" stroke-width="10" stroke-linecap="round"/>
+        <circle cx="400" cy="400" r="26" fill="#f8f4ff"/>
+        <text x="110" y="460" font-family="Nunito Sans, sans-serif" font-weight="800" font-size="28" fill="#c3b5ea" text-anchor="middle">faint</text>
+        <text x="690" y="460" font-family="Nunito Sans, sans-serif" font-weight="800" font-size="28" fill="#ffe24a" text-anchor="middle">really strong</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- 13 · J-CODE -->
+<section class="slide" data-dur="16" aria-label="The Scout J-Code">
+  <div class="kicker">Scouts' own code</div>
+  <h2>The <span class="hl">J-Code</span>: chat without sharing a language</h2>
+  <div class="jgrid">
+    <div class="jc panel in" style="--d:.1"><b>JWN</b><p>My name is…</p></div>
+    <div class="jc panel in" style="--d:.2"><b>JFC</b><p>I come from… <small>(country)</small></p></div>
+    <div class="jc panel in" style="--d:.3"><b>JHO</b><p>I am … years old</p></div>
+    <div class="jc panel in" style="--d:.4"><b>JCS</b><p>I am a Cub Scout</p></div>
+    <div class="jc panel in" style="--d:.5"><b>JSC</b><p>I am a Scout</p></div>
+    <div class="jc panel in" style="--d:.6"><b>JLS</b><p>I am a Scout Leader</p></div>
+    <div class="jc panel in" style="--d:.7"><b>JWB</b><p>The weather here is… <small>1 cloudy · 2 rainy · 3 very rainy · 4 snowy · 5 fine</small></p></div>
+    <div class="jc panel in" style="--d:.8"><b>JHJ</b><p>Happy JOTA-JOTI!</p></div>
+    <div class="jc panel in" style="--d:.9"><b>JSW</b><p>Best Scouting wishes to you</p></div>
+  </div>
+  <div class="xband in" style="--d:1.2"><b>Add X to ask!</b><span><span class="mono">JWN X</span> = What's your name?</span><span><span class="mono">JHO X</span> = How old are you?</span></div>
+</section>
+
+<!-- 14 · J-CODE CHAT -->
+<section class="slide" data-dur="18" aria-label="A J-Code chat example">
+  <div class="kicker">Try it: a J-Code chat</div>
+  <h2>Sam in England meets <span class="hl">Paco in Venezuela</span></h2>
+  <div class="chat">
+    <div class="msg in" style="--d:.3"><div class="who">Sam<small>England</small></div><div class="bubble"><span class="code">JHJ!</span> <span class="code">JWN</span> Sam. <span class="code">JFC</span> England. <span class="code">JWNX</span>?<span class="tr">Happy JOTA-JOTI! My name is Sam. I come from England. What's your name?</span></div></div>
+    <div class="msg them in" style="--d:2.3"><div class="who">Paco<small>Venezuela</small></div><div class="bubble"><span class="code">JWN</span> Paco. <span class="code">JSC</span>. <span class="code">JHO</span> 12. <span class="code">JHOX</span>?<span class="tr">My name is Paco. I am a Scout. I am 12. How old are you?</span></div></div>
+    <div class="msg in" style="--d:4.3"><div class="who">Sam<small>England</small></div><div class="bubble"><span class="code">JHO</span> 9. <span class="code">JCS</span>. <span class="code">JWB</span> 2.<span class="tr">I am 9. I am a Cub Scout. The weather here is rainy.</span></div></div>
+    <div class="msg them in" style="--d:6.3"><div class="who">Paco<small>Venezuela</small></div><div class="bubble"><span class="code">JWB</span> 5! <span class="code">JSW</span> Sam. 73!<span class="tr">The weather here is fine! Best Scouting wishes, Sam. Goodbye!</span></div></div>
+  </div>
+</section>
+
+<!-- 15 · SCRIPT PART 1 -->
+<section class="slide" data-dur="20" aria-label="Contact script part 1: calling and hello">
+  <div class="kicker">Your radio script · part 1</div>
+  <h2>Make a contact</h2>
+  <div class="chat">
+    <div class="msg in" style="--d:.3"><div class="who"><span class="step">1 · Call</span>Us<small data-cs></small></div><div class="bubble">“CQ Jamboree, CQ Jamboree, this is <span class="cs" data-cs></span>, <span data-csp></span>, calling and standing by.”</div></div>
+    <div class="msg them in" style="--d:3"><div class="who"><span class="step">2 · They answer</span>Them<small>their callsign</small></div><div class="bubble">“<span class="cs" data-cs></span>, this is <span class="fill">their callsign</span>. How do you copy? Over.”</div></div>
+    <div class="msg in" style="--d:5.5"><div class="who"><span class="step">3 · Say hello</span>Us<small data-cs></small></div><div class="bubble">“<span class="fill">their callsign</span>, this is <span class="cs" data-cs></span>. Good afternoon! You're 5 and 9. My name is <span class="fill">first name</span>, that's <span class="fill">spell it: Sierra Alpha Mike</span>. Over.”</div></div>
+  </div>
+</section>
+
+<!-- 16 · SCRIPT PART 2 -->
+<section class="slide" data-dur="20" aria-label="Contact script part 2: chatting and goodbye">
+  <div class="kicker">Your radio script · part 2</div>
+  <h2>Chat, then say goodbye</h2>
+  <div class="chat">
+    <div class="msg them in" style="--d:.3"><div class="who"><span class="step">4 · They reply</span>Them<small>their callsign</small></div><div class="bubble">“Thanks <span class="fill">your name</span>! I'm <span class="fill">their name</span>. My QTH is <span class="fill">their town</span>. How old are you? Over.”</div></div>
+    <div class="msg in" style="--d:3"><div class="who"><span class="step">5 · Chat</span>Us<small data-cs></small></div><div class="bubble">“I'm <span class="fill">age</span> and I'm a <span class="fill">Beaver / Cub / Scout</span>. The weather here is <span class="fill">sunny / rainy</span>. Back to you, over.”</div></div>
+    <div class="msg in" style="--d:5.5"><div class="who"><span class="step">6 · Goodbye</span>Us<small data-cs></small></div><div class="bubble">“Thank you <span class="fill">their name</span>! Happy JOTA-JOTI. 73 from <span class="cs" data-cs></span>.”</div></div>
+  </div>
+  <div class="after in" style="--d:7"><span class="tag y">Then</span>Write the contact in the logbook and swap QSL cards.</div>
+</section>
+
+<!-- 17 · SAFE & KIND -->
+<section class="slide" data-dur="14" aria-label="Staying safe on the radio">
+  <div class="kicker">Be safe, be kind</div>
+  <h2>What to say on air</h2>
+  <div class="safe">
+    <div class="panel yes">
+      <h3 style="color:var(--green)">Great to share</h3>
+      <ul>
+        <li><svg viewBox="0 0 40 40"><use href="#i-tick"/></svg>Your first name</li>
+        <li><svg viewBox="0 0 40 40"><use href="#i-tick"/></svg>Your age and Scout section</li>
+        <li><svg viewBox="0 0 40 40"><use href="#i-tick"/></svg>The weather, camps and games</li>
+        <li><svg viewBox="0 0 40 40"><use href="#i-tick"/></svg>Questions about their country</li>
+      </ul>
+    </div>
+    <div class="panel no">
+      <h3 style="color:var(--red)">Keep private</h3>
+      <ul>
+        <li><svg viewBox="0 0 40 40"><use href="#i-cross"/></svg>Your surname</li>
+        <li><svg viewBox="0 0 40 40"><use href="#i-cross"/></svg>Your address or school</li>
+        <li><svg viewBox="0 0 40 40"><use href="#i-cross"/></svg>Phone numbers or emails</li>
+        <li><svg viewBox="0 0 40 40"><use href="#i-cross"/></svg>Politics or religion</li>
+      </ul>
+    </div>
+  </div>
+  <div class="licence in" style="--d:.5">
+    <svg viewBox="0 0 72 72" aria-hidden="true"><circle cx="36" cy="36" r="34" fill="#160a31"/><use href="#i-mast" x="16" y="10" width="40" height="56" color="#ffe24a"/></svg>
+    A licensed radio amateur is with you the whole time. They're in charge of the station.
+  </div>
+</section>
+
+<!-- 18 · YOUR TURN -->
+<section class="slide s-end" data-dur="14" aria-label="Your turn">
+  <div class="copy">
+    <div class="kicker in">Ready?</div>
+    <h1 class="in" style="--d:.15">Your turn <span class="hl">on the radio!</span></h1>
+    <p class="lead in" style="--d:.35">Ask a leader at the radio table to have a go.</p>
+    <p class="lead in" style="--d:.55;color:var(--paper)">While you wait: can you spell your name in the radio alphabet?</p>
+  </div>
+  <div class="qsl in" style="--d:.4" role="img" aria-label="Example QSL card confirming a radio contact">
+    <div class="top"><div><div class="meta">Confirming our contact</div><div class="big">QSL</div></div><div style="text-align:right"><div class="meta">From</div><div class="cs2" data-cs></div><div class="meta" style="margin-top:12px">JOTA-JOTI</div></div></div>
+    <table>
+      <tr><th>To</th><th>Date</th><th>UTC</th><th>MHz</th><th>Mode</th><th>RS</th></tr>
+      <tr><td>XX0YYY</td><td>17 Oct</td><td>1432</td><td>14.290</td><td>SSB</td><td>59</td></tr>
+    </table>
+    <div class="note">Thanks for my first ever contact! 73</div>
+  </div>
+</section>
+
+<!-- persistent chrome -->
+<div class="chrome" id="chrome">
+  <div class="onair"><i></i>On air · <span class="cs" data-cs></span></div>
+  <div class="bar" id="bar"></div>
+  <div class="count" id="count">1 / 18</div>
+</div>
+
+</div>
+</div>
+
+<div class="controls" id="controls" role="toolbar" aria-label="Slideshow controls">
+  <button type="button" id="b-prev" aria-label="Previous slide">◀ Prev</button>
+  <button type="button" id="b-play" aria-label="Pause or play">❚❚ Pause</button>
+  <button type="button" id="b-next" aria-label="Next slide">Next ▶</button>
+  <button type="button" id="b-full" aria-label="Full screen">⛶ Full screen</button>
+</div>
+
+<script>
+/* ===== EDIT ME: your JOTA station callsign ===== */
+const CONFIG = { callsign: "GB0XXX" };
+
+(() => {
+  const NATO = {A:"Alpha",B:"Bravo",C:"Charlie",D:"Delta",E:"Echo",F:"Foxtrot",G:"Golf",H:"Hotel",I:"India",J:"Juliet",K:"Kilo",L:"Lima",M:"Mike",N:"November",O:"Oscar",P:"Papa",Q:"Quebec",R:"Romeo",S:"Sierra",T:"Tango",U:"Uniform",V:"Victor",W:"Whiskey",X:"X-ray",Y:"Yankee",Z:"Zulu",
+    "0":"Zero","1":"One","2":"Two","3":"Three","4":"Four","5":"Five","6":"Six","7":"Seven","8":"Eight","9":"Nine"};
+  const cs = CONFIG.callsign.toUpperCase();
+  document.querySelectorAll("[data-cs]").forEach(e => e.textContent = cs);
+  document.querySelectorAll("[data-csp]").forEach(e => e.textContent = [...cs].map(c => NATO[c] || c).join(" "));
+
+  /* alphabet grid, with S-C-O-U-T spelled out by the animation */
+  const spellOrder = {S:0,C:1,O:2,U:3,T:4};
+  const abc = document.getElementById("abc");
+  "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").forEach(l => {
+    const d = document.createElement("div");
+    if (l in spellOrder) { d.className = "sp"; d.style.setProperty("--d", spellOrder[l]); }
+    d.innerHTML = `<b>${l}</b><span>${NATO[l]}</span>`;
+    abc.appendChild(d);
+  });
+  const key = document.createElement("div");
+  key.className = "key";
+  key.innerHTML = "<b>S·C·O·U·T</b><span>Sierra Charlie Oscar Uniform Tango</span>";
+  abc.appendChild(key);
+
+  /* S-meter ticks */
+  const ticks = document.getElementById("ticks");
+  for (let k = 1; k <= 9; k++) {
+    const th = (170 - (k - 1) * 150 / 8) * Math.PI / 180;
+    const c = (r) => [400 + r * Math.cos(th), 400 - r * Math.sin(th)];
+    const [x1, y1] = c(300), [x2, y2] = c(355), [tx, ty] = c(255);
+    const col = k === 9 ? "#ffe24a" : "#c3b5ea";
+    ticks.insertAdjacentHTML("beforeend",
+      `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${col}" stroke-width="${k === 9 ? 8 : 5}"/>` +
+      `<text x="${tx.toFixed(1)}" y="${(ty + 12).toFixed(1)}" fill="${col}">${k}</text>`);
+  }
+
+  /* wave paths */
+  const voice = (x, n) => { // periodic over [0,1] with n "words"
+    const a = 2 * Math.PI * x * n;
+    return (0.62 * Math.sin(a) + 0.28 * Math.sin(3 * a + 1.1) + 0.14 * Math.sin(5 * a + 0.4)) / 0.92;
+  };
+  document.querySelectorAll("[data-wave]").forEach(p => {
+    const k = p.dataset.wave, W = +p.dataset.w, H = +p.dataset.h, C = +(p.dataset.c || 1), V = +(p.dataset.v || 2);
+    const N = Math.max(400, Math.round(C * 24)), mid = H / 2, amp = H / 2 - 6;
+    let d = "";
+    for (let i = 0; i <= N; i++) {
+      const x = i / N; let y;
+      if (k === "sine" || k === "carrier") y = Math.sin(2 * Math.PI * C * x);
+      else if (k === "voice") y = voice(x, C);
+      else if (k === "am") y = (0.55 + 0.45 * voice(x, V)) * Math.sin(2 * Math.PI * C * x);
+      else if (k === "env") y = (0.55 + 0.45 * voice(x, V));
+      d += (i ? "L" : "M") + (x * W).toFixed(1) + " " + (mid - y * amp).toFixed(1);
+    }
+    p.setAttribute("d", d);
+  });
+
+  /* ===== kiosk engine ===== */
+  const stage = document.getElementById("stage");
+  const fit = () => stage.style.setProperty("--s", Math.min(innerWidth / 1920, innerHeight / 1080));
+  addEventListener("resize", fit); fit();
+
+  const slides = [...document.querySelectorAll(".slide")];
+  const bar = document.getElementById("bar"), count = document.getElementById("count");
+  slides.forEach(() => { const s = document.createElement("div"); s.className = "seg"; s.innerHTML = "<i></i>"; bar.appendChild(s); });
+  const segs = [...bar.children];
+  let cur = 0, elapsed = 0, last = performance.now(), paused = false;
+  const dur = i => (+slides[i].dataset.dur || 12) * 1000;
+
+  function show(n) {
+    slides[cur].classList.remove("active");
+    cur = (n + slides.length) % slides.length;
+    elapsed = 0;
+    void slides[cur].offsetWidth; // restart CSS animations
+    slides[cur].classList.add("active");
+    segs.forEach((s, i) => { s.classList.toggle("done", i < cur); s.firstChild.style.width = i < cur ? "100%" : "0"; });
+    count.textContent = (cur + 1) + " / " + slides.length;
+  }
+  function setPaused(p) {
+    paused = p; document.body.classList.toggle("paused", p);
+    document.getElementById("b-play").textContent = p ? "▶ Play" : "❚❚ Pause";
+  }
+  function tick(now) {
+    const dt = now - last; last = now;
+    if (!paused) {
+      elapsed += dt;
+      if (elapsed >= dur(cur)) show(cur + 1);
+    }
+    segs[cur].firstChild.style.width = Math.min(100, elapsed / dur(cur) * 100) + "%";
+    requestAnimationFrame(tick);
+  }
+
+  const m = location.hash.match(/^#s(\d+)$/);
+  show(m ? +m[1] - 1 : 0);
+  if (m) setPaused(true);
+  requestAnimationFrame(t => { last = t; tick(t); });
+
+  const next = () => show(cur + 1), prev = () => show(cur - 1);
+  const togglePlay = () => setPaused(!paused);
+  const full = () => {
+    try {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen?.().catch(() => {});
+    } catch (e) {}
+  };
+  document.getElementById("b-next").onclick = next;
+  document.getElementById("b-prev").onclick = prev;
+  document.getElementById("b-play").onclick = togglePlay;
+  document.getElementById("b-full").onclick = full;
+  addEventListener("keydown", e => {
+    if (e.key === "ArrowRight" || e.key === "PageDown") next();
+    else if (e.key === "ArrowLeft" || e.key === "PageUp") prev();
+    else if (e.key === " " || e.key === "k") { e.preventDefault(); togglePlay(); }
+    else if (e.key === "f") full();
+  });
+
+  /* hide cursor + controls when idle */
+  let idleT;
+  const wake = () => { document.body.classList.remove("idle"); clearTimeout(idleT); idleT = setTimeout(() => document.body.classList.add("idle"), 2500); };
+  ["mousemove", "pointerdown", "keydown", "touchstart"].forEach(ev => addEventListener(ev, wake, { passive: true }));
+  document.body.classList.add("idle");
+
+  /* keep the screen awake */
+  let lock = null;
+  const keepAwake = async () => { try { lock = await navigator.wakeLock?.request("screen"); } catch (e) {} };
+  keepAwake();
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") keepAwake(); });
+})();
+</script>
+</body>
+</html>
