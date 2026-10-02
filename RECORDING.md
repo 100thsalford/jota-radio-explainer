@@ -1,6 +1,6 @@
 # Recording the voiceover
 
-The kiosk deck plays a recorded clip for each slide if one is in the `audio/` folder. If a clip is missing, the browser reads that slide's line instead, so you can add recordings one at a time.
+Recorded clips for all 18 slides are in `audio/` (read by Nathan, October 2026). The kiosk deck plays a recorded clip for each slide if one is in the `audio/` folder. If a clip is missing, the browser reads that slide's line instead, so you can add recordings one at a time.
 
 ## How to record
 
@@ -9,7 +9,7 @@ The kiosk deck plays a recorded clip for each slide if one is in the `audio/` fo
 - One clip per slide. Each clip can be a different Scout or leader.
 - Save each clip with the exact file name below. `.mp3`, `.m4a` (iPhone and most Android voice memos) and `.wav` all work.
 - Put the clips in the `audio/` folder and push, or send them to Nathan to add.
-- On slide 15, say **our callsign** in the radio alphabet where it says {callsign}.
+- Slide 15 currently says "our callsign". Once the special event callsign is issued, re-record just that clip with the callsign in the radio alphabet, and update line 15 in `NARR`.
 - The captions on screen use these words, so stick to the script. If you change a line, update the matching line in `NARR` in `deck.html` too.
 
 **Consent:** this site is public. Only record young people with their parent or carer's permission, and use no full names in the clips.
@@ -32,7 +32,7 @@ The kiosk deck plays a recorded clip for each slide if one is in the `audio/` fo
 | 12 | `12-signal-report.mp3` | Signal report | When you talk to another station, tell them how well you can hear them. The first number is how easy they are to understand, from one to five. The second is how strong they are, from one to nine. Five and nine means loud and clear! |
 | 13 | `13-j-code.mp3` | The J-Code | Scouts have their own code, called the J-Code, so we can chat even if we don't speak the same language. JWN means my name is. JHO means I am this many years old. Add an X to ask a question. JWNX means what's your name? |
 | 14 | `14-j-code-chat.mp3` | A J-Code chat | Here's Sam from England chatting with Paco from Venezuela. They don't speak the same language, but with the J-Code they can swap their names, their ages and even the weather. Happy JOTA-JOTI! |
-| 15 | `15-script-1.mp3` | Radio script part 1 | Here's how to make a contact. First, we call: CQ Jamboree, this is {callsign}. When someone answers, say hello, give them a signal report and tell them your first name. Remember to spell it in the radio alphabet! |
+| 15 | `15-script-1.mp3` | Radio script part 1 | Here's how to make a contact. First, we call: CQ Jamboree, this is our callsign. When someone answers, say hello, give them a signal report and tell them your first name. Remember to spell it out in the radio alphabet! |
 | 16 | `16-script-2.mp3` | Radio script part 2 | Now have a chat. Tell them your age, your Scout section and what the weather is like. When you've finished, say thank you, Happy JOTA-JOTI, and 73. Then we write the contact in the logbook. |
 | 17 | `17-stay-safe.mp3` | What to say on air | Stay safe on air. It's great to share your first name, your age and what you like doing in Scouts. Keep your surname, address, school and phone number private. A licensed radio operator will be with you the whole time. |
 | 18 | `18-your-turn.mp3` | Your turn | Now it's your turn! Ask a leader at the radio table to have a go. While you wait, practise spelling your name in the radio alphabet. Good luck, and 73! |
