@@ -27,7 +27,8 @@ body.idle{cursor:none}
 .viewport{position:fixed;inset:0;overflow:hidden;background:
   radial-gradient(1200px 700px at 85% -10%, rgba(138,60,240,.28), transparent 60%),
   radial-gradient(900px 600px at -10% 110%, rgba(31,214,184,.12), transparent 60%), var(--night)}
-.stage{position:absolute;left:50%;top:50%;width:1920px;height:1080px;transform:translate(-50%,-50%) scale(var(--s,.5));transform-origin:center}
+[hidden]{display:none!important}
+.stage{position:absolute;left:50%;top:50%;width:1920px;height:1230px;transform:translate(-50%,-50%) scale(var(--s,.5));transform-origin:center}
 
 /* ---------- slides ---------- */
 .slide{position:absolute;inset:0;padding:78px 120px 150px;display:flex;flex-direction:column;gap:34px;opacity:0;visibility:hidden;transition:opacity .6s ease,visibility 0s linear .6s}
@@ -268,6 +269,30 @@ body:not(.idle) .controls{opacity:1}
 .controls button:hover{background:var(--line)}
 .controls button:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
 
+/* ---------- narration: caption band + start card ---------- */
+.deck{position:absolute;left:0;top:0;width:1920px;height:1080px}
+.caps{position:absolute;left:0;top:1080px;width:1920px;height:150px;display:flex;align-items:center;justify-content:center;gap:30px;padding:0 140px;border-top:3px solid var(--line)}
+.caps p{margin:0;max-width:1480px;font:700 38px/1.3 var(--f-body);text-align:center;text-wrap:balance;color:var(--paper)}
+.caps p.fresh{animation:capIn .35s ease both}
+@keyframes capIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.spk{appearance:none;border:0;background:var(--night-3);color:var(--muted);width:72px;height:72px;border-radius:50%;display:grid;place-items:center;flex:none;cursor:pointer}
+.spk svg{width:40px;height:40px}
+.spk .on{display:none}
+body.sound .spk{background:var(--teal);color:var(--night)}
+body.sound .spk .on{display:block}
+body.sound .spk .off{display:none}
+.spk:focus-visible{outline:4px solid var(--yellow);outline-offset:3px}
+.hint{flex:none;font:800 24px/1 var(--f-body);letter-spacing:.06em;color:var(--yellow);white-space:nowrap}
+body.sound .hint{display:none}
+.start{position:absolute;inset:0;display:grid;place-items:center;background:rgba(22,10,49,.78);backdrop-filter:blur(6px);z-index:5}
+.start .card{width:1100px;background:var(--night-2);border:4px solid var(--yellow);border-radius:40px;padding:64px 80px;display:flex;flex-direction:column;align-items:center;gap:30px;text-align:center}
+.start .card svg{width:120px;height:120px;color:var(--yellow)}
+.start .card p{font-size:34px;line-height:1.35;color:var(--muted);max-width:30ch}
+.start .go{appearance:none;border:0;border-radius:999px;background:var(--yellow);color:var(--night);font:800 50px/1 var(--f-display);padding:28px 70px 22px;cursor:pointer}
+.start .quiet{appearance:none;border:0;background:none;color:var(--muted);font:700 30px/1 var(--f-body);text-decoration:underline;cursor:pointer;padding:10px}
+.start button:focus-visible{outline:4px solid var(--paper);outline-offset:4px}
+.start .auto{font:700 24px/1 var(--f-mono);color:var(--muted);opacity:.7}
+
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{animation:none!important;transition:none!important}
   .ring{opacity:.5;transform:scale(.6)}
@@ -315,6 +340,7 @@ body:not(.idle) .controls{opacity:1}
 
 <div class="viewport" id="viewport">
 <div class="stage" id="stage">
+<div class="deck">
 
 <!-- 1 · TITLE -->
 <section class="slide s-title" data-dur="12" aria-label="Jamboree on the Air">
@@ -801,7 +827,23 @@ body:not(.idle) .controls{opacity:1}
   <div class="bar" id="bar"></div>
   <div class="count" id="count">1 / 18</div>
 </div>
+</div><!-- /deck -->
 
+<div class="caps" id="caps">
+  <button type="button" class="spk" id="spk" aria-label="Turn the voice on or off"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M6 15h7l9-8v26l-9-8H6z" fill="currentColor"/><g class="on" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><path d="M27 14q4 6 0 12"/><path d="M31 9q8 11 0 22"/></g><g class="off" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><path d="M27 15l9 10M36 15l-9 10"/></g></svg></button>
+  <p id="capText" aria-live="polite"></p>
+  <span class="hint" id="hint">Tap for sound</span>
+</div>
+
+<div class="start" id="start" role="dialog" aria-label="Start the slideshow">
+  <div class="card">
+    <svg viewBox="0 0 40 40" aria-hidden="true"><path d="M6 15h7l9-8v26l-9-8H6z" fill="currentColor"/><g class="on" style="display:block" fill="none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><path d="M27 14q4 6 0 12"/><path d="M31 9q8 11 0 22"/></g><g class="off" style="display:none" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"><path d="M27 15l9 10M36 15l-9 10"/></g></svg>
+    <h2>Radio explained</h2>
+    <p>A looping show about how Scouts talk by radio, with a voiceover and captions.</p>
+    <button type="button" class="go" id="go-sound">Start with sound</button>
+    <button type="button" class="quiet" id="go-quiet">Start without sound</button>
+    <span class="auto" id="auto">Starting quietly in 25s</span>
+  </div>
 </div>
 </div>
 
@@ -809,6 +851,7 @@ body:not(.idle) .controls{opacity:1}
   <button type="button" id="b-prev" aria-label="Previous slide">◀ Prev</button>
   <button type="button" id="b-play" aria-label="Pause or play">❚❚ Pause</button>
   <button type="button" id="b-next" aria-label="Next slide">Next ▶</button>
+  <button type="button" id="b-sound" aria-label="Turn the voice on or off">Sound</button>
   <button type="button" id="b-full" aria-label="Full screen">⛶ Full screen</button>
 </div>
 
@@ -869,17 +912,124 @@ const CONFIG = { callsign: "GB0XXX" };
     p.setAttribute("d", d);
   });
 
+  /* ===== narration: one line per slide (captions + browser voice fallback) =====
+     Recorded clips go in audio/ as 01-title.mp3 … 18-your-turn.mp3 (.m4a or .wav also work).
+     {csp} = our callsign in the radio alphabet. */
+  const SLUGS = ["title","big-idea","broadcast-vs-ham","press-to-talk","voice-journey","riding-the-wave","wave-sizes","vhf-uhf","hf","alphabet","radio-words","signal-report","j-code","j-code-chat","script-1","script-2","stay-safe","your-turn"];
+  const NARR = [
+    "Welcome to Jamboree on the Air! This weekend, Scouts all over the world are talking to each other by radio. No phones, no Wi-Fi and no internet. Just radio waves flying through the air.",
+    "When you make a phone call, your voice travels through masts, cables and the internet. Ham radio is different. Your voice goes straight from our antenna to theirs, through the air. It even works when the phone network is down.",
+    "There are two kinds of radio. With broadcast radio, like the music stations in the car, one station talks and everyone else just listens. Ham radio is two-way. Both stations can talk and listen, taking turns, just like a walkie-talkie.",
+    "This is the magic button. It's called PTT, which means push to talk. First, press and hold the button. Then talk clearly, about a hand-span from the microphone. When you've finished, say over, and let go, so you can hear the reply.",
+    "So what happens when you talk? Your voice makes the air wobble. The microphone turns the wobbles into a tiny electric signal. The radio puts it onto a radio wave, and the antenna sends it flying. Their radio catches it and plays your voice. All at the speed of light!",
+    "Your voice can't travel very far on its own. So the radio puts it on a super-fast radio wave, like a parcel in a delivery van. At the other end, their radio unpacks the parcel, and out comes your voice.",
+    "Radio waves come in different sizes. HF waves are really long, from the length of a bus to a football pitch. VHF and UHF waves are much shorter, from as tall as a door to as long as your arm. Longer waves can travel further.",
+    "VHF and UHF waves travel in straight lines, like a torch beam. They're great for talking across town. But hills and tall buildings get in the way. A repeater on top of a hill can catch the signal and send it on.",
+    "HF waves can go right round the world! High above the clouds is a layer called the ionosphere. HF waves bounce off it, back down to the ground, and up again, all the way to Scouts in other countries. The Sun changes the layer, so it's different in the day and at night.",
+    "On a crackly radio, letters like B, D and P all sound the same. So radio operators use special words instead. A is Alpha, B is Bravo, C is Charlie. Scout is Sierra, Charlie, Oscar, Uniform, Tango. Can you spell your name?",
+    "Radio operators have their own words. CQ means calling anyone. Over means your turn. Roger means I understood. Say again means please repeat. QTH means where I am. And 73 means best wishes, goodbye!",
+    "When you talk to another station, tell them how well you can hear them. The first number is how easy they are to understand, from one to five. The second is how strong they are, from one to nine. Five and nine means loud and clear!",
+    "Scouts have their own code, called the J-Code, so we can chat even if we don't speak the same language. JWN means my name is. JHO means I am this many years old. Add an X to ask a question. JWNX means what's your name?",
+    "Here's Sam from England chatting with Paco from Venezuela. They don't speak the same language, but with the J-Code they can swap their names, their ages and even the weather. Happy JOTA-JOTI!",
+    "Here's how to make a contact. First, we call: CQ Jamboree, this is {csp}. When someone answers, say hello, give them a signal report and tell them your first name. Remember to spell it in the radio alphabet!",
+    "Now have a chat. Tell them your age, your Scout section and what the weather is like. When you've finished, say thank you, Happy JOTA-JOTI, and 73. Then we write the contact in the logbook.",
+    "Stay safe on air. It's great to share your first name, your age and what you like doing in Scouts. Keep your surname, address, school and phone number private. A licensed radio operator will be with you the whole time.",
+    "Now it's your turn! Ask a leader at the radio table to have a go. While you wait, practise spelling your name in the radio alphabet. Good luck, and 73!"
+  ];
+  const csp = [...cs].map(c => NATO[c] || c).join(" ");
+  const forSpeech = t => t
+    .replace(/JOTA-JOTI/g, "Jota Joti")
+    .replace(/\b(CQ|QTH|PTT|HF|VHF|UHF)\b/g, w => w.split("").join(" "))
+    .replace(/\bJ([A-Z]{2,3})\b/g, (w) => w.split("").join(" "))
+    .replace(/\b73\b/g, "seventy-three");
+  const sentencesOf = t => (t.match(/[^.!?]+[.!?]+\s*/g) || [t]).map(x => x.trim()).filter(Boolean);
+
   /* ===== kiosk engine ===== */
   const stage = document.getElementById("stage");
-  const fit = () => stage.style.setProperty("--s", Math.min(innerWidth / 1920, innerHeight / 1080));
+  const fit = () => stage.style.setProperty("--s", Math.min(innerWidth / 1920, innerHeight / 1230));
   addEventListener("resize", fit); fit();
 
   const slides = [...document.querySelectorAll(".slide")];
   const bar = document.getElementById("bar"), count = document.getElementById("count");
+  const capText = document.getElementById("capText");
   slides.forEach(() => { const s = document.createElement("div"); s.className = "seg"; s.innerHTML = "<i></i>"; bar.appendChild(s); });
   const segs = [...bar.children];
-  let cur = 0, elapsed = 0, last = performance.now(), paused = false;
+  let cur = 0, elapsed = 0, last = performance.now(), paused = false, soundOn = false, started = false;
   const dur = i => (+slides[i].dataset.dur || 12) * 1000;
+
+  /* narration state for the current slide */
+  const nar = { token: 0, mode: "timed", lines: [], idx: 0, t: 0, plan: [], audio: null, cuts: [], doneAt: null };
+  const setCap = t => { capText.textContent = t; capText.classList.remove("fresh"); void capText.offsetWidth; capText.classList.add("fresh"); };
+  const finish = tok => { if (tok === nar.token && nar.doneAt === null) nar.doneAt = elapsed; };
+
+  let VOICE = null;
+  const pickVoice = () => {
+    try {
+      const score = v => (/en[-_]GB/i.test(v.lang) ? 10 : /^en/i.test(v.lang) ? 4 : -50)
+        + (/natural|neural|online/i.test(v.name) ? 6 : 0)
+        + (/sonia|libby|maisie|ryan|thomas|google uk/i.test(v.name) ? 3 : 0)
+        - (/whisper|zarvox|bad news|bells|bubbles|cellos|jester|organ|trinoids|boing|albert|superstar/i.test(v.name) ? 40 : 0);
+      VOICE = speechSynthesis.getVoices().slice().sort((a, b) => score(b) - score(a))[0] || null;
+    } catch (e) { VOICE = null; }
+  };
+  if ("speechSynthesis" in window) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+
+  function stopNarration() {
+    nar.token++;
+    if (nar.audio) { nar.audio.pause(); nar.audio.removeAttribute("src"); nar.audio = null; }
+    try { speechSynthesis.cancel(); } catch (e) {}
+  }
+  function startNarration(i) {
+    stopNarration();
+    const tok = nar.token;
+    nar.lines = sentencesOf(NARR[i].replace(/\{csp\}/g, csp));
+    nar.idx = 0; nar.t = 0; nar.doneAt = null; nar.mode = "timed";
+    nar.plan = nar.lines.map(l => Math.max(2600, l.length * 68));   // quiet mode: reading pace
+    setCap(nar.lines[0]);
+    if (soundOn) { nar.mode = "loading"; tryClip(i, 0, tok); }
+  }
+  const EXTS = ["mp3", "m4a", "wav"];
+  function tryClip(i, k, tok) {
+    if (tok !== nar.token) return;
+    if (k >= EXTS.length) return speak(tok);
+    const a = new Audio();
+    a.preload = "auto";
+    a.addEventListener("error", () => tryClip(i, k + 1, tok), { once: true });
+    a.addEventListener("loadedmetadata", () => {
+      if (tok !== nar.token) return;
+      nar.audio = a; nar.mode = "clip";
+      const total = nar.lines.reduce((n, l) => n + l.length, 0); let acc = 0;
+      nar.cuts = nar.lines.map(l => (acc += l.length) / total);
+      if (!paused) a.play().catch(() => { nar.mode = "timed"; });
+    }, { once: true });
+    a.addEventListener("timeupdate", () => {
+      if (tok !== nar.token || !a.duration) return;
+      const f = a.currentTime / a.duration;
+      let j = nar.cuts.findIndex(c => f < c); if (j < 0) j = nar.lines.length - 1;
+      if (j !== nar.idx) { nar.idx = j; setCap(nar.lines[j]); }
+    });
+    a.addEventListener("ended", () => finish(tok));
+    a.src = `audio/${String(i + 1).padStart(2, "0")}-${SLUGS[i]}.${EXTS[k]}`;
+  }
+  function speak(tok) {
+    if (!("speechSynthesis" in window)) { nar.mode = "timed"; return; }
+    nar.mode = "speech"; nar.idx = 0;
+    const sayNext = () => {
+      if (tok !== nar.token) return;
+      if (nar.idx >= nar.lines.length) return finish(tok);
+      const line = nar.lines[nar.idx];
+      setCap(line);
+      const u = new SpeechSynthesisUtterance(forSpeech(line));
+      if (VOICE) { u.voice = VOICE; u.lang = VOICE.lang; } else u.lang = "en-GB";
+      u.rate = 0.95;
+      let over = false, guard;
+      const go = () => { if (over) return; over = true; clearTimeout(guard); nar.idx++; sayNext(); };
+      const arm = () => { guard = setTimeout(() => paused ? arm() : go(), line.length * 110 + 4000); };
+      u.onend = go; u.onerror = go; arm();
+      speechSynthesis.speak(u);
+    };
+    sayNext();
+  }
 
   function show(n) {
     slides[cur].classList.remove("active");
@@ -889,28 +1039,69 @@ const CONFIG = { callsign: "GB0XXX" };
     slides[cur].classList.add("active");
     segs.forEach((s, i) => { s.classList.toggle("done", i < cur); s.firstChild.style.width = i < cur ? "100%" : "0"; });
     count.textContent = (cur + 1) + " / " + slides.length;
+    startNarration(cur);
   }
   function setPaused(p) {
     paused = p; document.body.classList.toggle("paused", p);
     document.getElementById("b-play").textContent = p ? "▶ Play" : "❚❚ Pause";
+    if (nar.audio) { p ? nar.audio.pause() : nar.audio.play().catch(() => {}); }
+    if (nar.mode === "speech") { try { p ? speechSynthesis.pause() : speechSynthesis.resume(); } catch (e) {} }
+  }
+  function setSound(on) {
+    soundOn = on; document.body.classList.toggle("sound", on);
+    if (on) pickVoice();
+    elapsed = 0; startNarration(cur);
+  }
+  /* how long this slide should stay up: its minimum, or the narration plus a short pause */
+  function target() {
+    let est = 0;
+    if (nar.mode === "clip" && nar.audio && nar.audio.duration) est = nar.audio.duration * 1000;
+    else est = nar.plan.reduce((a, b) => a + b, 0) * (nar.mode === "timed" ? 1 : 1.15);
+    return Math.max(dur(cur), est + 1200);
   }
   function tick(now) {
-    const dt = now - last; last = now;
+    const dt = Math.min(now - last, 250); last = now;
     if (!paused) {
       elapsed += dt;
-      if (elapsed >= dur(cur)) show(cur + 1);
+      if (nar.mode === "timed" && nar.doneAt === null) {
+        nar.t += dt;
+        if (nar.t >= nar.plan[nar.idx]) {
+          nar.t = 0; nar.idx++;
+          if (nar.idx >= nar.lines.length) finish(nar.token); else setCap(nar.lines[nar.idx]);
+        }
+      }
+      const ready = nar.doneAt !== null && elapsed >= nar.doneAt + 1200;
+      if ((ready && elapsed >= dur(cur)) || elapsed > target() + 60000) show(cur + 1);
     }
-    segs[cur].firstChild.style.width = Math.min(100, elapsed / dur(cur) * 100) + "%";
+    const t = nar.doneAt !== null ? Math.max(dur(cur), nar.doneAt + 1200) : target();
+    segs[cur].firstChild.style.width = Math.min(100, elapsed / t * 100) + "%";
     requestAnimationFrame(tick);
   }
 
+  /* start card: one click unlocks sound (browsers block audio until then) */
+  const startCard = document.getElementById("start"), autoEl = document.getElementById("auto");
+  let autoLeft = 25, autoT = null;
+  const begin = withSound => {
+    if (started) return; started = true;
+    clearInterval(autoT); startCard.hidden = true;
+    setSound(withSound); show(0);
+  };
+  document.getElementById("go-sound").onclick = () => begin(true);
+  document.getElementById("go-quiet").onclick = e => { e.stopPropagation(); begin(false); };
+
   const m = location.hash.match(/^#s(\d+)$/);
   show(m ? +m[1] - 1 : 0);
-  if (m) setPaused(true);
+  if (m) { setPaused(true); startCard.hidden = true; started = true; }
+  else autoT = setInterval(() => {
+    autoLeft--; autoEl.textContent = `Starting quietly in ${autoLeft}s`;
+    if (autoLeft <= 0) begin(false);
+  }, 1000);
+  window.__jota = { nar, get cur() { return cur; }, get soundOn() { return soundOn; } }; // for testing
   requestAnimationFrame(t => { last = t; tick(t); });
 
   const next = () => show(cur + 1), prev = () => show(cur - 1);
   const togglePlay = () => setPaused(!paused);
+  const toggleSound = () => { if (!started) return begin(true); setSound(!soundOn); };
   const full = () => {
     try {
       if (document.fullscreenElement) document.exitFullscreen();
@@ -921,11 +1112,18 @@ const CONFIG = { callsign: "GB0XXX" };
   document.getElementById("b-prev").onclick = prev;
   document.getElementById("b-play").onclick = togglePlay;
   document.getElementById("b-full").onclick = full;
+  document.getElementById("b-sound").onclick = toggleSound;
+  document.getElementById("spk").onclick = toggleSound;
+  /* running quietly? a tap anywhere on the slides turns the voice on */
+  document.getElementById("viewport").addEventListener("click", e => {
+    if (started && !soundOn && !e.target.closest(".spk")) setSound(true);
+  });
   addEventListener("keydown", e => {
     if (e.key === "ArrowRight" || e.key === "PageDown") next();
     else if (e.key === "ArrowLeft" || e.key === "PageUp") prev();
     else if (e.key === " " || e.key === "k") { e.preventDefault(); togglePlay(); }
     else if (e.key === "f") full();
+    else if (e.key === "s") toggleSound();
   });
 
   /* hide cursor + controls when idle */

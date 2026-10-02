@@ -10,7 +10,13 @@ An auto-looping, full-screen slideshow for a JOTA-JOTI station. It explains ham 
 2. Press **F** (or the Full screen button) to go full screen.
 3. Leave it. It loops forever, hides the mouse pointer and keeps the screen awake.
 
-Controls: **←/→** previous/next, **Space** pause/play, **F** full screen. Move the mouse to show the control bar.
+Controls: **←/→** previous/next, **Space** pause/play, **S** voice on/off, **F** full screen. Move the mouse to show the control bar.
+
+## Voiceover and captions
+
+On load, click **Start with sound** once (browsers block sound until someone clicks). If nobody clicks within 25 seconds it starts quietly with captions; a tap on the screen turns the voice on.
+
+Each slide plays its recorded clip from `audio/` if there is one, otherwise the browser reads the line aloud. Captions always show along the bottom. Slides wait for the voice to finish before moving on. For the best browser voice, use Microsoft Edge on Windows. See [RECORDING.md](RECORDING.md) for the script and file names.
 
 ## Set your callsign
 
